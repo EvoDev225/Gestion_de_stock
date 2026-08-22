@@ -23,6 +23,10 @@ enum TypeMouvement{
   PERTE
   DOMMAGE
 }
+enum StatutInventaire {
+  EN_COURS
+  VALIDE
+}
 enum TypeRetour {
   CLIENT
   FOURNISSEUR
@@ -51,6 +55,8 @@ model Utilisateur{
   mouvementsStock MouvementStock[]
   retours Retour[]
   ventes        Vente[]
+  inventaires       Inventaire[]
+journalActivites  JournalActivite[]
   commandesFournisseur CommandeFournisseur[]
   receptionsFournisseur ReceptionFournisseur[]
 
@@ -75,6 +81,7 @@ model Produit {
   dateCreation    DateTime  @default(now())
   variantes        Variante[]
   lots             Lot[]
+  lignesInventaire  LigneInventaire[]
   mouvementStocks  MouvementStock[]
   ligneCommandeFournisseurs LigneCommandeFournisseur[]
   lignesRetour LigneRetour[]
@@ -90,6 +97,7 @@ model Variante{
   produitId      String
   produit        Produit @relation(fields: [produitId],references: [id],onDelete: Cascade)   
   lots            Lot[]
+  lignesInventaire  LigneInventaire[]
   mouvementStocks MouvementStock[]
   lignesRetour LigneRetour[]
 
@@ -136,6 +144,7 @@ model MouvementStock{
   produitId       String
   varianteId       String?
   lotId           String?
+  ligneInventaire   LigneInventaire?
   utilisateur     Utilisateur @relation(fields: [utilisateurID],references: [id],onDelete: Restrict)
   produit        Produit @relation(fields: [produitId],references: [id],onDelete: Restrict)
   variante       Variante? @relation(fields: [varianteId],references: [id],onDelete: Restrict)
@@ -240,4 +249,41 @@ model LigneRetour {
   retour     Retour   @relation(fields: [retourId], references: [id], onDelete: Cascade)
   produit    Produit  @relation(fields: [produitId], references: [id], onDelete: Restrict)
   variante   Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+}
+
+
+model Inventaire {
+  id             String            @id @default(uuid())
+  dateLancement  DateTime          @default(now())
+  statut         StatutInventaire  @default(EN_COURS)
+  utilisateurId  String
+  utilisateur    Utilisateur       @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  lignesInventaire LigneInventaire[]
+}
+
+model LigneInventaire {
+  id                 String   @id @default(uuid())
+  quantiteTheorique  Int
+  quantitePhysique   Int
+  ecart              Int
+  justification      String?
+  inventaireId       String
+  produitId          String
+  varianteId         String?
+  mouvementStockId   String?  @unique
+  inventaire         Inventaire      @relation(fields: [inventaireId], references: [id], onDelete: Cascade)
+  produit            Produit         @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante           Variante?       @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  mouvementStock     MouvementStock? @relation(fields: [mouvementStockId], references: [id], onDelete: Restrict)
+}
+
+model JournalActivite {
+  id                    String   @id @default(uuid())
+  action                String
+  entiteConcerneeType   String?
+  entiteConcerneeId     String?
+  details               String?
+  dateAction            DateTime @default(now())
+  utilisateurId         String
+  utilisateur           Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
 }
