@@ -1,0 +1,37 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+    obtenirCommandeFournisseurParId,
+    changerStatutCommande,
+} from "@/lib/services/commande-fournisseur.service";
+
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const commande = await obtenirCommandeFournisseurParId(id);
+
+    if (!commande) {
+        return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json(commande);
+}
+
+export async function PATCH(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const { id } = await params;
+    const body = await request.json();
+
+    if (body.statut !== "EN_ATTENTE" && body.statut !== "ENVOYEE") {
+        return NextResponse.json(
+            { error: "Statut invalide. Utilisez EN_ATTENTE ou ENVOYEE ici. RECUE/RECUE_PARTIELLE sont gérés via la réception." },
+            { status: 400 }
+        );
+    }
+
+    const commande = await changerStatutCommande(id, body.statut);
+    return NextResponse.json(commande);
+}
