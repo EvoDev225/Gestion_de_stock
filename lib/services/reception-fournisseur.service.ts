@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/prisma";
 
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "../../generated/prisma/client";
 export async function listerReceptions(commandeFournisseurId?: string) {
     return prisma.receptionFournisseur.findMany({
         where: commandeFournisseurId ? { commandeFournisseurId } : undefined,
@@ -65,7 +66,9 @@ export async function creerReception(data: {
     });
 }
 
-async function recalculerStatutCommande(tx: any, commandeFournisseurId: string) {
+async function recalculerStatutCommande(
+  tx: Prisma.TransactionClient,
+  commandeFournisseurId: string) {
     const lignesCommande = await tx.ligneCommandeFournisseur.findMany({
         where: { commandeFournisseurId },
         include: { lignesReception: true },
