@@ -39,6 +39,6 @@ export async function DELETE(
     const acces = await exigerRole(request, ["ADMIN"]);
     if ("erreur" in acces) return acces.erreur;
     const { id } = await params;
-    const utilisateur = await desactiverUtilisateur(id);
+    const utilisateur = await desactiverUtilisateur(id, acces.session.id);
     return NextResponse.json(utilisateur);
 }

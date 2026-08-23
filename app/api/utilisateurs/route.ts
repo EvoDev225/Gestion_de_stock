@@ -19,6 +19,9 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    const utilisateur = await creerUtilisateur(body);
+    const utilisateur = await creerUtilisateur({
+        ...body,
+        utilisateurCreateurId: acces.session.id,
+    });
     return NextResponse.json(utilisateur, { status: 201 });
 }
