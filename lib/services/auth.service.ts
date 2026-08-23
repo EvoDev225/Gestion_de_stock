@@ -1,14 +1,12 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import { SignJWT } from "jose";
 import { prisma } from "@/lib/prisma";
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const DUREE_SESSION = "7d";
 
 export async function connecter(email: string, motDePasseSaisi: string) {
-    const utilisateur = await prisma.utilisateur.findUnique({
-        where: { email },
-    });
+    const utilisateur = await prisma.utilisateur.findUnique({ where: { email } });
 
     if (!utilisateur || !utilisateur.actif) {
         throw new Error("Identifiants invalides");
@@ -20,11 +18,10 @@ export async function connecter(email: string, motDePasseSaisi: string) {
         throw new Error("Identifiants invalides");
     }
 
-    const token = jwt.sign(
-        { id: utilisateur.id, role: utilisateur.role, nom: utilisateur.nom },
-        JWT_SECRET,
-        { expiresIn: DUREE_SESSION }
-    );
+    const token = await new SignJWT({ id: utilisateur.id, role: utilisateur.role, nom: utilisateur.nom })
+        .setProtectedHeader({ alg: "HS256" })
+        .setExpirationTime(DUREE_SESSION)
+        .sign(JWT_SECRET);
 
     return { token, utilisateur: { id: utilisateur.id, nom: utilisateur.nom, role: utilisateur.role } };
 }
