@@ -1,5 +1,5 @@
 import { jwtVerify } from "jose";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
@@ -22,4 +22,21 @@ export async function obtenirSession(request: NextRequest): Promise<SessionPaylo
     } catch (error) {
         return null;
     }
+}
+
+export async function exigerRole(
+    request: NextRequest,
+    rolesAutorises: ("ADMIN" | "EMPLOYEE")[]
+): Promise<{ session: SessionPayload } | { erreur: NextResponse }> {
+    const session = await obtenirSession(request);
+
+    if (!session) {
+        return { erreur: NextResponse.json({ error: "Non authentifié" }, { status: 401 }) };
+    }
+
+    if (!rolesAutorises.includes(session.role)) {
+        return { erreur: NextResponse.json({ error: "Accès refusé" }, { status: 403 }) };
+    }
+
+    return { session };
 }
