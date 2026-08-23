@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerCommandesFournisseur() {
     return prisma.commandeFournisseur.findMany({
@@ -29,30 +30,59 @@ export async function creerCommandeFournisseur(data: {
         throw new Error("Une commande doit contenir au moins une ligne");
     }
 
-    return prisma.commandeFournisseur.create({
-        data: {
-            fournisseurId: data.fournisseurId,
-            utilisateurId: data.utilisateurId,
-            dateCommande: new Date(),
-            statut: "EN_ATTENTE",
-            ligneCommandeFournisseur: {
-                create: data.lignes.map((ligne) => ({
-                    produitId: ligne.produitId,
-                    quantiteCommande: ligne.quantiteCommande,
-                    prixAchatUnitaire: ligne.prixAchatUnitaire,
-                })),
+    return prisma.$transaction(async (tx) => {
+        const commande = await tx.commandeFournisseur.create({
+            data: {
+                fournisseurId: data.fournisseurId,
+                utilisateurId: data.utilisateurId,
+                dateCommande: new Date(),
+                statut: "EN_ATTENTE",
+                ligneCommandeFournisseur: {
+                    create: data.lignes.map((ligne) => ({
+                        produitId: ligne.produitId,
+                        quantiteCommande: ligne.quantiteCommande,
+                        prixAchatUnitaire: ligne.prixAchatUnitaire,
+                    })),
+                },
             },
-        },
-        include: { ligneCommandeFournisseur: true },
+            include: { ligneCommandeFournisseur: true },
+        });
+
+        await enregistrerActivite({
+            action: "COMMANDE_CREEE",
+            entiteConcerneeType: "CommandeFournisseur",
+            entiteConcerneeId: commande.id,
+            details: `Commande créée auprès du fournisseur ${data.fournisseurId}, ${data.lignes.length} ligne(s)`,
+            utilisateurId: data.utilisateurId,
+        }, tx);
+
+        return commande;
     });
 }
 
 export async function changerStatutCommande(
     id: string,
-    statut: "EN_ATTENTE" | "ENVOYEE"
+    statut: "EN_ATTENTE" | "ENVOYEE",
+    utilisateurId: string
 ) {
-    return prisma.commandeFournisseur.update({
-        where: { id },
-        data: { statut },
+    return prisma.$transaction(async (tx) => {
+        const commandeAvant = await tx.commandeFournisseur.findUniqueOrThrow({
+            where: { id },
+        });
+
+        const commande = await tx.commandeFournisseur.update({
+            where: { id },
+            data: { statut },
+        });
+
+        await enregistrerActivite({
+            action: "COMMANDE_STATUT_CHANGE",
+            entiteConcerneeType: "CommandeFournisseur",
+            entiteConcerneeId: commande.id,
+            details: `Statut changé : ${commandeAvant.statut} → ${statut}`,
+            utilisateurId,
+        }, tx);
+
+        return commande;
     });
 }
