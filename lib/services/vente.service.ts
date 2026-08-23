@@ -35,7 +35,7 @@ export async function creerVente(data: {
                 clientId: data.clientId,
                 utilisateurId: data.utilisateurId,
                 montantTotal,
-                dateVente: new Date(),   // <-- ligne à ajouter
+                dateVente: new Date(),
                 ligneVentes: {
                     create: data.lignes.map((ligne) => ({
                         produitId: ligne.produitId,
@@ -69,17 +69,16 @@ export async function creerVente(data: {
                 where: { id: ligne.produitId },
                 data: { quantiteStock: { decrement: ligne.quantite } },
             });
-            await enregistrerActivite({
-                action: "VENTE_CREEE",
-                entiteConcerneeType: "Vente",
-                entiteConcerneeId: vente.id,
-                details: `Vente de ${data.lignes.length} article(s), total ${vente.montantTotal}`,
-                utilisateurId: data.utilisateurId,
-            }, tx);
-
         }
 
-
+        // sorti de la boucle : un seul appel, après que toutes les lignes soient traitées
+        await enregistrerActivite({
+            action: "VENTE_CREEE",
+            entiteConcerneeType: "Vente",
+            entiteConcerneeId: vente.id,
+            details: `Vente de ${data.lignes.length} article(s), total ${montantTotal}`,
+            utilisateurId: data.utilisateurId,
+        }, tx);
 
         return vente;
     });
