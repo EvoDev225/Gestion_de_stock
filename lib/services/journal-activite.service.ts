@@ -1,6 +1,5 @@
-// lib/services/journal-activite.service.ts
 import { prisma } from "@/lib/prisma";
-
+import type { Prisma } from "../../generated/prisma/client";
 export async function listerJournalActivite(utilisateurId?: string) {
     return prisma.journalActivite.findMany({
         where: utilisateurId ? { utilisateurId } : undefined,
@@ -10,12 +9,15 @@ export async function listerJournalActivite(utilisateurId?: string) {
 }
 
 // Utilitaire interne, à appeler depuis les AUTRES services plus tard
-export async function enregistrerActivite(data: {
-    action: string;
-    entiteConcerneeType?: string;
-    entiteConcerneeId?: string;
-    details?: string;
-    utilisateurId: string;
-}) {
-    return prisma.journalActivite.create({ data });
+export async function enregistrerActivite(
+    data: {
+        action: string;
+        entiteConcerneeType?: string;
+        entiteConcerneeId?: string;
+        details?: string;
+        utilisateurId: string;
+    },
+    client: Prisma.TransactionClient | typeof prisma = prisma
+) {
+    return client.journalActivite.create({ data });
 }
