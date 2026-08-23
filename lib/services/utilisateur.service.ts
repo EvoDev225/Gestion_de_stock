@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-
+import bcrypt from "bcryptjs";
 export async function listerUtilisateurs() {
     return prisma.utilisateur.findMany({
         select: { id: true, nom: true, email: true, role: true, actif: true, dateCreation: true },
@@ -14,14 +14,21 @@ export async function obtenirUtilisateurParId(id: string) {
     });
 }
 
+const TOURS_DE_HASHAGE = 10;
+
 export async function creerUtilisateur(data: {
     nom: string;
     email: string;
     motDePasse: string;
     role?: "ADMIN" | "EMPLOYEE";
 }) {
+    const motDePasseHash = await bcrypt.hash(data.motDePasse, TOURS_DE_HASHAGE);
+
     return prisma.utilisateur.create({
-        data,
+        data: {
+            ...data,
+            motDePasse: motDePasseHash,
+        },
         select: { id: true, nom: true, email: true, role: true, actif: true },
     });
 }
