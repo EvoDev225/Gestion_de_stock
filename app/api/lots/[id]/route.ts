@@ -5,6 +5,7 @@ import {
     modifierLot,
     supprimerLot,
 } from "@/lib/services/lot.service";
+import { exigerRole } from "@/lib/auth";
 
 export async function GET(
     request: NextRequest,
@@ -40,6 +41,8 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
     const { id } = await params;
 
     try {

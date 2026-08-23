@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { exigerRole } from "@/lib/auth";
 import {
     obtenirFournisseurParId,
     modifierFournisseur,
@@ -33,6 +34,10 @@ export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
 
     try {
