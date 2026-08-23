@@ -18,7 +18,6 @@ export async function GET(
 
     return NextResponse.json(commande);
 }
-
 export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -35,6 +34,6 @@ export async function PATCH(
         );
     }
 
-    const commande = await changerStatutCommande(id, body.statut);
+    const commande = await changerStatutCommande(id, body.statut, acces.session.id);
     return NextResponse.json(commande);
 }
