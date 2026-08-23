@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerVentes() {
     return prisma.vente.findMany({
@@ -68,15 +69,37 @@ export async function creerVente(data: {
                 where: { id: ligne.produitId },
                 data: { quantiteStock: { decrement: ligne.quantite } },
             });
+            await enregistrerActivite({
+                action: "VENTE_CREEE",
+                entiteConcerneeType: "Vente",
+                entiteConcerneeId: vente.id,
+                details: `Vente de ${data.lignes.length} article(s), total ${vente.montantTotal}`,
+                utilisateurId: data.utilisateurId,
+            }, tx);
+
         }
+
+
 
         return vente;
     });
 }
 
-export async function annulerVente(id: string) {
-    return prisma.vente.update({
-        where: { id },
-        data: { statut: "ANNULEE" },
+export async function annulerVente(id: string, utilisateurId: string) {
+    return prisma.$transaction(async (tx) => {
+        const vente = await tx.vente.update({
+            where: { id },
+            data: { statut: "ANNULEE" },
+        });
+
+        await enregistrerActivite({
+            action: "VENTE_ANNULEE",
+            entiteConcerneeType: "Vente",
+            entiteConcerneeId: vente.id,
+            details: `Annulation de la vente ${vente.id}`,
+            utilisateurId,
+        }, tx);
+
+        return vente;
     });
 }
