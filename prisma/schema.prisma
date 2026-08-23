@@ -12,21 +12,24 @@ datasource db {
   provider = "postgresql"
 }
 
-enum RoleUtilisateur{
-    ADMIN
-    EMPLOYEE
+enum RoleUtilisateur {
+  ADMIN
+  EMPLOYEE
 }
-enum TypeMouvement{
+
+enum TypeMouvement {
   ENTREE
   SORTIE
   AJUSTEMENT
   PERTE
   DOMMAGE
 }
+
 enum StatutInventaire {
   EN_COURS
   VALIDE
 }
+
 enum TypeRetour {
   CLIENT
   FOURNISSEUR
@@ -44,171 +47,164 @@ enum StatutCommande {
   RECUE
 }
 
-model Utilisateur{
-  id          String  @id @default(uuid())
-  nom         String
-  email       String  @unique
-  motDePasse  String
-  role        RoleUtilisateur @default(EMPLOYEE)
-  actif       Boolean @default(true)
-  dateCreation DateTime @default(now())
-  mouvementsStock MouvementStock[]
-  retours Retour[]
-  ventes        Vente[]
-  inventaires       Inventaire[]
-journalActivites  JournalActivite[]
-  commandesFournisseur CommandeFournisseur[]
+model Utilisateur {
+  id                    String                 @id @default(uuid())
+  nom                   String
+  email                 String                 @unique
+  motDePasse            String
+  role                  RoleUtilisateur        @default(EMPLOYEE)
+  actif                 Boolean                @default(true)
+  dateCreation          DateTime               @default(now())
+  mouvementsStock       MouvementStock[]
+  retours               Retour[]
+  ventes                Vente[]
+  inventaires           Inventaire[]
+  journalActivites      JournalActivite[]
+  commandesFournisseur  CommandeFournisseur[]
   receptionsFournisseur ReceptionFournisseur[]
-
 }
+
 model Categorie {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   nom         String
   description String?
-  produits     Produit[]
+  produits    Produit[]
 }
 
 model Produit {
-  id              String    @id @default(uuid())
-  nom             String
-  sku             String    @unique
-  description     String?
-  prixAchat       Decimal   @db.Decimal(10, 2)
-  prixVente       Decimal   @db.Decimal(10, 2)
-  seuilMinimum    Int       @default(0)
-  quantiteStock   Int       @default(0)
-  archive         Boolean   @default(false)
-  dateCreation    DateTime  @default(now())
-  variantes        Variante[]
-  lots             Lot[]
-  lignesInventaire  LigneInventaire[]
-  mouvementStocks  MouvementStock[]
+  id                        String                     @id @default(uuid())
+  nom                       String
+  sku                       String                     @unique
+  description               String?
+  prixAchat                 Decimal                    @db.Decimal(10, 2)
+  prixVente                 Decimal                    @db.Decimal(10, 2)
+  seuilMinimum              Int                        @default(0)
+  quantiteStock             Int                        @default(0)
+  archive                   Boolean                    @default(false)
+  dateCreation              DateTime                   @default(now())
+  variantes                 Variante[]
+  lots                      Lot[]
+  lignesInventaire          LigneInventaire[]
+  mouvementStocks           MouvementStock[]
   ligneCommandeFournisseurs LigneCommandeFournisseur[]
-  lignesRetour LigneRetour[]
-  ligneVentes   LigneVente[]
-  categorieId     String?
-  categorie       Categorie? @relation(fields: [categorieId],references: [id],onDelete: SetNull)
+  lignesRetour              LigneRetour[]
+  ligneVentes               LigneVente[]
+  categorieId               String?
+  categorie                 Categorie?                 @relation(fields: [categorieId], references: [id], onDelete: SetNull)
 }
 
-model Variante{
-  id             String @id @default(uuid())
-  nomVariante    String
-  skuVariante    String @unique
-  produitId      String
-  produit        Produit @relation(fields: [produitId],references: [id],onDelete: Cascade)   
-  lots            Lot[]
-  lignesInventaire  LigneInventaire[]
-  mouvementStocks MouvementStock[]
-  lignesRetour LigneRetour[]
-
+model Variante {
+  id               String            @id @default(uuid())
+  nomVariante      String
+  skuVariante      String            @unique
+  produitId        String
+  produit          Produit           @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  lots             Lot[]
+  lignesInventaire LigneInventaire[]
+  mouvementStocks  MouvementStock[]
+  lignesRetour     LigneRetour[]
 }
 
 model Lot {
-  id            String @id @default(uuid())
-  numeroLot     String 
-  dateExpiration DateTime
-  quantite       Int
-  dateReception  DateTime
-  produitId      String?
-  varianteId     String?
+  id              String           @id @default(uuid())
+  numeroLot       String
+  dateExpiration  DateTime
+  quantite        Int
+  dateReception   DateTime
+  produitId       String?
+  varianteId      String?
   mouvementStocks MouvementStock[]
 
-  produit        Produit? @relation(fields: [produitId],references: [id],onDelete: Cascade)  
-  variante       Variante? @relation(fields: [varianteId],references: [id],onDelete: Cascade)  
+  produit  Produit?  @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  variante Variante? @relation(fields: [varianteId], references: [id], onDelete: Cascade)
 }
 
 model Fournisseur {
-  id            String @id @default(uuid())
-  nom           String
-  email         String? @unique
-  telephone     String
-  adresse       String
+  id                   String                @id @default(uuid())
+  nom                  String
+  email                String?               @unique
+  telephone            String
+  adresse              String
   commandeFournisseurs CommandeFournisseur[]
 }
+
 model Client {
-  id            String @id @default(uuid())
-  nom           String
-  email         String? @unique
-  telephone     String?
-  adresse       String?
-  ventes        Vente[]
+  id        String  @id @default(uuid())
+  nom       String
+  email     String? @unique
+  telephone String?
+  adresse   String?
+  ventes    Vente[]
 }
 
-model MouvementStock{
-  id              String @id @default(uuid())
-  typeMouvement   TypeMouvement @default(ENTREE)
-  quantite        Int 
+model MouvementStock {
+  id              String           @id @default(uuid())
+  typeMouvement   TypeMouvement    @default(ENTREE)
+  quantite        Int
   motif           String?
   dateMouvement   DateTime
-  utilisateurID   String
+  utilisateurId   String
   produitId       String
-  varianteId       String?
+  varianteId      String?
   lotId           String?
-  ligneInventaire   LigneInventaire?
-  utilisateur     Utilisateur @relation(fields: [utilisateurID],references: [id],onDelete: Restrict)
-  produit        Produit @relation(fields: [produitId],references: [id],onDelete: Restrict)
-  variante       Variante? @relation(fields: [varianteId],references: [id],onDelete: Restrict)
-  lot             Lot? @relation(fields: [lotId],references: [id],onDelete: Restrict)
-
-
+  ligneInventaire LigneInventaire?
+  utilisateur     Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  produit         Produit          @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante        Variante?        @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  lot             Lot?             @relation(fields: [lotId], references: [id], onDelete: Restrict)
 }
 
 model Vente {
-  id              String @id @default(uuid())
-  dateVente       DateTime
-  montantTotal    Decimal @db.Decimal(10,2)
-  statut          StatutVente @default(VALIDEE)
-  clientId        String?
-  utilisateurId   String
-  client          Client?   @relation(fields: [clientId],references: [id],onDelete: Restrict)
-  utilisateur     Utilisateur   @relation(fields: [utilisateurId],references: [id],onDelete: Restrict)
-  ligneVentes      LigneVente[]
-  retours Retour[]
+  id            String       @id @default(uuid())
+  dateVente     DateTime
+  montantTotal  Decimal      @db.Decimal(10, 2)
+  statut        StatutVente  @default(VALIDEE)
+  clientId      String?
+  utilisateurId String
+  client        Client?      @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  utilisateur   Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  ligneVentes   LigneVente[]
+  retours       Retour[]
 }
 
 model LigneVente {
-  id              String @id @default(uuid())
-  quantite        Int
-  prixUnitaire    Decimal @db.Decimal(10,2)
-  venteId         String
-  produitId       String
-  vente           Vente    @relation(fields: [venteId],references: [id],onDelete: Cascade)
-  produit         Produit  @relation(fields: [produitId],references: [id],onDelete: Restrict)
-
+  id           String  @id @default(uuid())
+  quantite     Int
+  prixUnitaire Decimal @db.Decimal(10, 2)
+  venteId      String
+  produitId    String
+  vente        Vente   @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  produit      Produit @relation(fields: [produitId], references: [id], onDelete: Restrict)
 }
 
 model CommandeFournisseur {
-  id              String @id @default(uuid())
-  dateCommande    DateTime
-  statut          StatutCommande @default(EN_ATTENTE)
-  fournisseurId   String
-  utilisateurId   String
+  id                       String                     @id @default(uuid())
+  dateCommande             DateTime
+  statut                   StatutCommande             @default(EN_ATTENTE)
+  fournisseurId            String
+  utilisateurId            String
   ligneCommandeFournisseur LigneCommandeFournisseur[]
-  receptionsFournisseur ReceptionFournisseur[]
-  retours Retour[]
+  receptionsFournisseur    ReceptionFournisseur[]
+  retours                  Retour[]
 
-  utilisateur     Utilisateur   @relation(fields: [utilisateurId],references: [id],onDelete: Restrict)
-  fournisseur     Fournisseur   @relation(fields: [fournisseurId],references: [id],onDelete: Restrict)
-
-
+  utilisateur Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  fournisseur Fournisseur @relation(fields: [fournisseurId], references: [id], onDelete: Restrict)
 }
 
 model LigneCommandeFournisseur {
-  id                    String @id   @default(uuid())
+  id                    String              @id @default(uuid())
   quantiteCommande      Int
-  prixAchatUnitaire     Decimal   @db.Decimal(10,2)
-  commandeFournisseurId   String
-  produitId                String
-  lignesReception LigneReception[]
-  commandeFournisseur     CommandeFournisseur @relation(fields: [commandeFournisseurId],references: [id],onDelete: Cascade)
-  produit         Produit  @relation(fields: [produitId],references: [id],onDelete: Restrict)
-
-
+  prixAchatUnitaire     Decimal             @db.Decimal(10, 2)
+  commandeFournisseurId String
+  produitId             String
+  lignesReception       LigneReception[]
+  commandeFournisseur   CommandeFournisseur @relation(fields: [commandeFournisseurId], references: [id], onDelete: Cascade)
+  produit               Produit             @relation(fields: [produitId], references: [id], onDelete: Restrict)
 }
 
 model ReceptionFournisseur {
-  id                    String   @id @default(uuid())
-  dateReception         DateTime @default(now())
+  id                    String              @id @default(uuid())
+  dateReception         DateTime            @default(now())
   commandeFournisseurId String
   utilisateurId         String
   commandeFournisseur   CommandeFournisseur @relation(fields: [commandeFournisseurId], references: [id], onDelete: Restrict)
@@ -217,19 +213,18 @@ model ReceptionFournisseur {
 }
 
 model LigneReception {
-  id                        String   @id @default(uuid())
-  quantiteRecue             Int
-  receptionFournisseurId    String
+  id                         String                   @id @default(uuid())
+  quantiteRecue              Int
+  receptionFournisseurId     String
   ligneCommandeFournisseurId String
-  receptionFournisseur      ReceptionFournisseur      @relation(fields: [receptionFournisseurId], references: [id], onDelete: Cascade)
-  ligneCommandeFournisseur  LigneCommandeFournisseur  @relation(fields: [ligneCommandeFournisseurId], references: [id], onDelete: Restrict)
+  receptionFournisseur       ReceptionFournisseur     @relation(fields: [receptionFournisseurId], references: [id], onDelete: Cascade)
+  ligneCommandeFournisseur   LigneCommandeFournisseur @relation(fields: [ligneCommandeFournisseurId], references: [id], onDelete: Restrict)
 }
 
-
 model Retour {
-  id                    String     @id @default(uuid())
+  id                    String               @id @default(uuid())
   typeRetour            TypeRetour
-  dateRetour            DateTime   @default(now())
+  dateRetour            DateTime             @default(now())
   motif                 String?
   venteId               String?
   commandeFournisseurId String?
@@ -241,49 +236,48 @@ model Retour {
 }
 
 model LigneRetour {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   quantite   Int
   retourId   String
   produitId  String
   varianteId String?
-  retour     Retour   @relation(fields: [retourId], references: [id], onDelete: Cascade)
-  produit    Produit  @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  retour     Retour    @relation(fields: [retourId], references: [id], onDelete: Cascade)
+  produit    Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
   variante   Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
 }
 
-
 model Inventaire {
-  id             String            @id @default(uuid())
-  dateLancement  DateTime          @default(now())
-  statut         StatutInventaire  @default(EN_COURS)
-  utilisateurId  String
-  utilisateur    Utilisateur       @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  id               String            @id @default(uuid())
+  dateLancement    DateTime          @default(now())
+  statut           StatutInventaire  @default(EN_COURS)
+  utilisateurId    String
+  utilisateur      Utilisateur       @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
   lignesInventaire LigneInventaire[]
 }
 
 model LigneInventaire {
-  id                 String   @id @default(uuid())
-  quantiteTheorique  Int
-  quantitePhysique   Int
-  ecart              Int
-  justification      String?
-  inventaireId       String
-  produitId          String
-  varianteId         String?
-  mouvementStockId   String?  @unique
-  inventaire         Inventaire      @relation(fields: [inventaireId], references: [id], onDelete: Cascade)
-  produit            Produit         @relation(fields: [produitId], references: [id], onDelete: Restrict)
-  variante           Variante?       @relation(fields: [varianteId], references: [id], onDelete: Restrict)
-  mouvementStock     MouvementStock? @relation(fields: [mouvementStockId], references: [id], onDelete: Restrict)
+  id                String          @id @default(uuid())
+  quantiteTheorique Int
+  quantitePhysique  Int
+  ecart             Int
+  justification     String?
+  inventaireId      String
+  produitId         String
+  varianteId        String?
+  mouvementStockId  String?         @unique
+  inventaire        Inventaire      @relation(fields: [inventaireId], references: [id], onDelete: Cascade)
+  produit           Produit         @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante          Variante?       @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  mouvementStock    MouvementStock? @relation(fields: [mouvementStockId], references: [id], onDelete: Restrict)
 }
 
 model JournalActivite {
-  id                    String   @id @default(uuid())
-  action                String
-  entiteConcerneeType   String?
-  entiteConcerneeId     String?
-  details               String?
-  dateAction            DateTime @default(now())
-  utilisateurId         String
-  utilisateur           Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
+  id                  String      @id @default(uuid())
+  action              String
+  entiteConcerneeType String?
+  entiteConcerneeId   String?
+  details             String?
+  dateAction          DateTime    @default(now())
+  utilisateurId       String
+  utilisateur         Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
 }
