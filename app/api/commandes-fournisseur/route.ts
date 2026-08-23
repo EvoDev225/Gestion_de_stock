@@ -3,6 +3,7 @@ import {
     listerCommandesFournisseur,
     creerCommandeFournisseur,
 } from "@/lib/services/commande-fournisseur.service";
+import { exigerRole } from "@/lib/auth";
 
 export async function GET() {
     const commandes = await listerCommandesFournisseur();
@@ -10,6 +11,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+        if ("erreur" in acces) return acces.erreur;
     const body = await request.json();
 
     if (!body.fournisseurId || !body.utilisateurId || !Array.isArray(body.lignes) || body.lignes.length === 0) {
