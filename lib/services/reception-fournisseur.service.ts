@@ -1,6 +1,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "../../generated/prisma/client";
+import { enregistrerActivite } from "./journal-activite.service";
 export async function listerReceptions(commandeFournisseurId?: string) {
     return prisma.receptionFournisseur.findMany({
         where: commandeFournisseurId ? { commandeFournisseurId } : undefined,
@@ -61,14 +62,20 @@ export async function creerReception(data: {
         }
 
         await recalculerStatutCommande(tx, data.commandeFournisseurId);
-
+        await enregistrerActivite({
+            action: "RECEPTION_CREEE",
+            entiteConcerneeType: "ReceptionFournisseur",
+            entiteConcerneeId: reception.id,
+            details: `Réception liée à la commande ${reception.commandeFournisseurId}, ${data.lignes.length} ligne(s)`,
+            utilisateurId: data.utilisateurId,
+        }, tx);
         return reception;
     });
 }
 
 async function recalculerStatutCommande(
-  tx: Prisma.TransactionClient,
-  commandeFournisseurId: string) {
+    tx: Prisma.TransactionClient,
+    commandeFournisseurId: string) {
     const lignesCommande = await tx.ligneCommandeFournisseur.findMany({
         where: { commandeFournisseurId },
         include: { lignesReception: true },
