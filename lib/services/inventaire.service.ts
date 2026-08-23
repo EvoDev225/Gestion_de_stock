@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerInventaires() {
     return prisma.inventaire.findMany({
@@ -27,21 +28,33 @@ export async function lancerInventaire(data: {
         where: { id: { in: data.produitIds } },
     });
 
-    return prisma.inventaire.create({
-        data: {
-            utilisateurId: data.utilisateurId,
-            dateLancement: new Date(),
-            statut: "EN_COURS",
-            lignesInventaire: {
-                create: produits.map((produit) => ({
-                    produitId: produit.id,
-                    quantiteTheorique: produit.quantiteStock,
-                    quantitePhysique: 0,
-                    ecart: 0,
-                })),
+    return prisma.$transaction(async (tx) => {
+        const inventaire = await tx.inventaire.create({
+            data: {
+                utilisateurId: data.utilisateurId,
+                dateLancement: new Date(),
+                statut: "EN_COURS",
+                lignesInventaire: {
+                    create: produits.map((produit) => ({
+                        produitId: produit.id,
+                        quantiteTheorique: produit.quantiteStock,
+                        quantitePhysique: 0,
+                        ecart: 0,
+                    })),
+                },
             },
-        },
-        include: { lignesInventaire: true },
+            include: { lignesInventaire: true },
+        });
+
+        await enregistrerActivite({
+            action: "INVENTAIRE_LANCE",
+            entiteConcerneeType: "Inventaire",
+            entiteConcerneeId: inventaire.id,
+            details: `Inventaire lancé sur ${produits.length} produit(s)`,
+            utilisateurId: data.utilisateurId,
+        }, tx);
+
+        return inventaire;
     });
 }
 
@@ -51,6 +64,10 @@ export async function validerInventaire(
     saisies: { ligneInventaireId: string; quantitePhysique: number; justification?: string }[]
 ) {
     return prisma.$transaction(async (tx) => {
+        const inventaireExistant = await tx.inventaire.findUniqueOrThrow({
+            where: { id },
+        });
+
         for (const saisie of saisies) {
             const ligne = await tx.ligneInventaire.findUnique({
                 where: { id: saisie.ligneInventaireId },
@@ -80,7 +97,7 @@ export async function validerInventaire(
                         quantite: Math.abs(ecart),
                         motif: saisie.justification ?? `Ajustement inventaire ${id}`,
                         dateMouvement: new Date(),
-                        utilisateurId: (await tx.inventaire.findUnique({ where: { id } }))!.utilisateurId,
+                        utilisateurId: inventaireExistant.utilisateurId,
                     },
                 });
 
@@ -95,6 +112,14 @@ export async function validerInventaire(
                 });
             }
         }
+
+        await enregistrerActivite({
+            action: "INVENTAIRE_VALIDE",
+            entiteConcerneeType: "Inventaire",
+            entiteConcerneeId: id,
+            details: `Inventaire validé, ${saisies.length} ligne(s) saisie(s)`,
+            utilisateurId: inventaireExistant.utilisateurId,
+        }, tx);
 
         return tx.inventaire.update({
             where: { id },
