@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerRetours(type?: "CLIENT" | "FOURNISSEUR") {
     return prisma.retour.findMany({
@@ -80,6 +81,13 @@ export async function creerRetour(data: {
                 data: { quantiteStock: ajustement },
             });
         }
+        await enregistrerActivite({
+    action: "RETOUR_CREE",
+    entiteConcerneeType: "Retour",
+    entiteConcerneeId: retour.id,
+    details: `Retour de type ${retour.typeRetour}`,
+    utilisateurId: data.utilisateurId,
+}, tx);
 
         return retour;
     });
