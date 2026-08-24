@@ -6,10 +6,6 @@ const ROUTES_PUBLIQUES = ["/api/auth/login"];
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    if (!pathname.startsWith("/api")) {
-        return NextResponse.next();
-    }
-
     if (ROUTES_PUBLIQUES.includes(pathname)) {
         return NextResponse.next();
     }
@@ -17,12 +13,15 @@ export async function middleware(request: NextRequest) {
     const session = await obtenirSession(request);
 
     if (!session) {
-        return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+        if (pathname.startsWith("/api")) {
+            return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
+        }
+        return NextResponse.redirect(new URL("/login", request.url));
     }
 
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: "/api/:path*",
-};
+    matcher: ["/api/:path*", "/dashboard/:path*"],
+};  
