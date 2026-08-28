@@ -39,6 +39,10 @@ enum StatutVente {
   VALIDEE
   ANNULEE
 }
+enum ModePaiement {
+  TOTAL
+  CREDIT
+}
 
 enum StatutCommande {
   EN_ATTENTE
@@ -159,6 +163,7 @@ model Vente {
   dateVente     DateTime
   montantTotal  Decimal      @db.Decimal(10, 2)
   statut        StatutVente  @default(VALIDEE)
+  modePaiement  ModePaiement @default(TOTAL)
   clientId      String?
   utilisateurId String
   client        Client?      @relation(fields: [clientId], references: [id], onDelete: Restrict)
