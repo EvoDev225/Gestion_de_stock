@@ -39,11 +39,9 @@ export function WatchlistBar({ produits }: WatchlistBarProps) {
                             msOverflowStyle: "none",
                         }}
                     >
-                        <style jsx>{`
-                div::-webkit-scrollbar {
-                display: none;
-                }
-            `}</style>
+                        <div className="flex items-center gap-6 overflow-x-auto scrollbar-width:none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+    {/* ... contenu existant ... */}
+</div>
                         {produits.map((produit, index) => (
                             <div
                                 key={index}
