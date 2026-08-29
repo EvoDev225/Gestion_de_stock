@@ -3,7 +3,7 @@ import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerVentes() {
     return prisma.vente.findMany({
-        include: { client: true, lignesVente: { include: { produit: true } } },
+        include: { client: true, ligneVentes: { include: { produit: true } } },
         orderBy: { dateVente: "desc" },
     });
 }
