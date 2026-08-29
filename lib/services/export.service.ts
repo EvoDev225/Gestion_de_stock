@@ -1,9 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { ColonneExcel } from '@/lib/utils/excel-builder';
-
-
-export type ValeurCellule = string | number | Date | boolean | null | undefined;
-export type LigneExport = Record<string, ValeurCellule>;
+import { Prisma } from '../../generated/prisma/client';
+import { ColonneExcel, LigneExport } from '@/lib/utils/excel-builder';
 
 export interface StructureExport {
     nomFichier: string;
@@ -155,7 +152,7 @@ export async function obtenirExportProduitsDetail(): Promise<StructureExport> {
 export async function obtenirExportMouvements(
     filtres: FiltresExport
 ): Promise<StructureExport> {
-    const whereDate: any = {};
+    const whereDate: Prisma.DateTimeFilter = {};
     if (filtres.dateDebut) whereDate.gte = filtres.dateDebut;
     if (filtres.dateFin) whereDate.lte = filtres.dateFin;
 
@@ -208,7 +205,7 @@ export async function obtenirExportMouvements(
 export async function obtenirExportVentes(
     filtres: FiltresExport
 ): Promise<StructureExport> {
-    const whereDate: any = {};
+    const whereDate: Prisma.DateTimeFilter = {};
     if (filtres.dateDebut) whereDate.gte = filtres.dateDebut;
     if (filtres.dateFin) whereDate.lte = filtres.dateFin;
 
@@ -254,11 +251,12 @@ export async function obtenirExportVentes(
 export async function obtenirExportCreances(
     filtres: FiltresExport
 ): Promise<StructureExport> {
-    const whereClause: any = { modePaiement: 'CREDIT' };
+    const whereClause: Prisma.VenteWhereInput = { modePaiement: 'CREDIT' };
     if (filtres.dateDebut || filtres.dateFin) {
-        whereClause.dateVente = {};
-        if (filtres.dateDebut) whereClause.dateVente.gte = filtres.dateDebut;
-        if (filtres.dateFin) whereClause.dateVente.lte = filtres.dateFin;
+        const whereDate: Prisma.DateTimeFilter = {};
+        if (filtres.dateDebut) whereDate.gte = filtres.dateDebut;
+        if (filtres.dateFin) whereDate.lte = filtres.dateFin;
+        whereClause.dateVente = whereDate;
     }
 
     const creances = await prisma.vente.findMany({
@@ -372,7 +370,7 @@ export async function obtenirExportFournisseurs(): Promise<StructureExport> {
 export async function obtenirExportInventaires(
     filtres: FiltresExport
 ): Promise<StructureExport> {
-    const whereClause: any = {};
+    const whereClause: Prisma.LigneInventaireWhereInput = {};
     if (filtres.inventaireId) {
         whereClause.inventaireId = filtres.inventaireId;
     }

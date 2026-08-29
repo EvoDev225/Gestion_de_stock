@@ -27,15 +27,22 @@ export async function GET(
         const { type } = await params;
 
         // 1. Contrôle d'accès & validation du type d'export
+        let authResult;
+
         if (EXPORTS_ADMIN_EMPLOYEE.includes(type)) {
-            await exigerRole(['ADMIN', 'EMPLOYEE']);
+            authResult = await exigerRole(request, ['ADMIN', 'EMPLOYEE']);
         } else if (EXPORTS_ADMIN_ONLY.includes(type)) {
-            await exigerRole(['ADMIN']);
+            authResult = await exigerRole(request, ['ADMIN']);
         } else {
             return NextResponse.json(
                 { message: `Type d'export inconnu : ${type}` },
                 { status: 400 }
             );
+        }
+
+        // Type guard : intercepte et renvoie la réponse d'erreur HTTP générée par exigerRole
+        if ('erreur' in authResult) {
+            return authResult.erreur;
         }
 
         // 2. Extraction des query parameters
@@ -77,7 +84,7 @@ export async function GET(
                 break;
             default:
                 return NextResponse.json(
-                    { message: 'Type d\'export non pris en charge.' },
+                    { message: "Type d'export non pris en charge." },
                     { status: 400 }
                 );
         }
@@ -90,19 +97,11 @@ export async function GET(
 
         // 5. Retour de la réponse binaire au client
         return await envoyerWorkbookEnReponse(workbook, donneesExport.nomFichier);
-    } catch (error: any) {
-        // Si exigerRole lève une erreur HTTP ou Response, nous la laissons remonter ou nous la gérons
-        if (error?.status === 401 || error?.status === 403) {
-            return NextResponse.json(
-                { message: error.message || 'Non autorisé' },
-                { status: error.status }
-            );
-        }
-
-        console.error('Erreur lors de la génération de l\'export Excel :', error);
+    } catch (error) {
+        console.error("Erreur lors de la génération de l'export Excel :", error);
 
         return NextResponse.json(
-            { message: 'Une erreur interne est survenue lors de l\'exportation.' },
+            { message: "Une erreur interne est survenue lors de l'exportation." },
             { status: 500 }
         );
     }
