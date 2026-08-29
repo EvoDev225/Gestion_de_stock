@@ -66,6 +66,19 @@ model Utilisateur {
   journalActivites      JournalActivite[]
   commandesFournisseur  CommandeFournisseur[]
   receptionsFournisseur ReceptionFournisseur[]
+  rapportsActivite      RapportActivite[]
+}
+
+// ... (les autres modèles restent inchangés) ...
+
+model RapportActivite {
+  id             String      @id @default(uuid())
+  dateDebut      DateTime
+  dateFin        DateTime
+  contenu        String      @db.Text
+  dateGeneration DateTime    @default(now())
+  utilisateurId  String
+  utilisateur    Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
 }
 
 model Categorie {
