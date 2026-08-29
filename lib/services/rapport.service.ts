@@ -16,7 +16,7 @@ export interface DonneesActivite {
         include: { produit: true; variante: true; lot: true };
     }>[];
     retours: Prisma.RetourGetPayload<{
-         include: { lignesRetour: { include: { produit: true } } }; 
+        include: { lignesRetour: { include: { produit: true } } }; 
     }>[];
     commandesFournisseur: Prisma.CommandeFournisseurGetPayload<{
         include: { fournisseur: true };
