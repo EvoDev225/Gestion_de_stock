@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { obtenirVenteParId, annulerVente } from "@/lib/services/vente.service";
-import { obtenirSession } from "@/lib/auth";
+import { exigerRole } from "@/lib/auth";
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const vente = await obtenirVenteParId(id);
 
@@ -20,12 +23,10 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await obtenirSession(request);
-    if (!session) {
-        return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    }
+    const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
+    if ("erreur" in acces) return acces.erreur;
 
     const { id } = await params;
-    const vente = await annulerVente(id, session.id);
+    const vente = await annulerVente(id, acces.session.id);
     return NextResponse.json(vente);
 }
