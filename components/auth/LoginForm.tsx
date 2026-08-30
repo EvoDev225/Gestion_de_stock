@@ -55,26 +55,26 @@ export function LoginForm() {
     };
 
     return (
-        <div className="w-full max-w-[380px] text-left">
+        <div className="relative w-full max-w-md mx-auto bg-card p-8 md:p-12 rounded-[24px] ambient-shadow corner-brackets corner-brackets-tl-br text-left">
             {/* En-tête du formulaire */}
             <h1
                 style={getItemStyle(0)}
                 className="font-display text-2xl font-medium text-foreground mb-2"
             >
-                Connexion
+                Bon retour
             </h1>
             <p
                 style={getItemStyle(70)}
                 className="font-sans text-sm text-foreground-muted mb-8"
             >
-                Accédez à votre espace de gestion.
+                Connectez-vous pour accéder à votre tableau de bord
             </p>
 
             {/* Formulaire principal */}
             <form onSubmit={handleSubmit} noValidate>
                 {/* Bandeau d'erreur conditionnel */}
                 {erreur && (
-                    <div className="mb-6 p-3 rounded-lg bg-danger/10 border border-danger/30 text-danger text-sm font-sans animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="mb-6 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm font-sans animate-in fade-in slide-in-from-top-1 duration-200">
                         {erreur}
                     </div>
                 )}
@@ -94,18 +94,23 @@ export function LoginForm() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="exemple@domaine.com"
-                        className="w-full h-[44px] px-[14px] bg-surface border border-border rounded-lg text-sm text-foreground font-sans placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:border-[1.5px] transition-colors"
+                        className="w-full h-[44px] px-[14px] bg-surface border border-border rounded-lg text-sm text-foreground font-sans placeholder:text-foreground-subtle focus:outline-none focus:border-primary focus:border-[1.5px] transition-colors"
                     />
                 </div>
 
                 {/* 2. Champ Mot de Passe */}
                 <div style={getItemStyle(210)} className="mb-[28px]">
-                    <label
-                        htmlFor="motDePasse"
-                        className="block text-sm font-medium text-foreground mb-[6px] font-sans"
-                    >
-                        Mot de passe
-                    </label>
+                    <div className="flex items-center justify-between mb-[6px]">
+                        <label
+                            htmlFor="motDePasse"
+                            className="block text-sm font-medium text-foreground font-sans"
+                        >
+                            Mot de passe
+                        </label>
+                        <a href="#" className="text-sm text-primary hover:underline">
+                            Mot de passe oublié ?
+                        </a>
+                    </div>
                     <div className="relative w-full">
                         <input
                             id="motDePasse"
@@ -114,7 +119,7 @@ export function LoginForm() {
                             value={motDePasse}
                             onChange={(e) => setMotDePasse(e.target.value)}
                             placeholder="••••••••"
-                            className="w-full h-[44px] pl-[14px] pr-[44px] bg-surface border border-border rounded-lg text-sm text-foreground font-sans placeholder:text-foreground-subtle focus:outline-none focus:border-accent focus:border-[1.5px] transition-colors"
+                            className="w-full h-[44px] pl-[14px] pr-[44px] bg-surface border border-border rounded-lg text-sm text-foreground font-sans placeholder:text-foreground-subtle focus:outline-none focus:border-primary focus:border-[1.5px] transition-colors"
                         />
                         <button
                             type="button"
@@ -140,7 +145,7 @@ export function LoginForm() {
                     <button
                         type="submit"
                         disabled={chargement}
-                        className="w-full h-[44px] bg-accent text-accent-foreground rounded-lg text-sm font-medium font-sans hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        className="w-full h-[44px] bg-primary text-primary-foreground rounded-full text-sm font-medium font-sans hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer"
                     >
                         {chargement ? (
                             <>
@@ -153,6 +158,12 @@ export function LoginForm() {
                     </button>
                 </div>
             </form>
+
+            <div style={getItemStyle(350)} className="mt-8 pt-6 border-t border-border text-center">
+                <p className="text-sm text-muted-foreground">
+                    Pas encore de compte ? <span className="text-foreground">Contactez votre administrateur</span>
+                </p>
+            </div>
         </div>
     );
 }
