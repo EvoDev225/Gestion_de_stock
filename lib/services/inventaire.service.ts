@@ -61,7 +61,8 @@ export async function lancerInventaire(data: {
 // Étape 2 : saisir les quantités physiques et valider (génère les ajustements)
 export async function validerInventaire(
     id: string,
-    saisies: { ligneInventaireId: string; quantitePhysique: number; justification?: string }[]
+    saisies: { ligneInventaireId: string; quantitePhysique: number; justification?: string }[],
+    utilisateurValidateurId: string
 ) {
     return prisma.$transaction(async (tx) => {
         const inventaireExistant = await tx.inventaire.findUniqueOrThrow({
@@ -88,7 +89,6 @@ export async function validerInventaire(
                 },
             });
 
-            // Génère un mouvement UNIQUEMENT si écart réel
             if (ecart !== 0) {
                 const mouvement = await tx.mouvementStock.create({
                     data: {
@@ -118,12 +118,16 @@ export async function validerInventaire(
             entiteConcerneeType: "Inventaire",
             entiteConcerneeId: id,
             details: `Inventaire validé, ${saisies.length} ligne(s) saisie(s)`,
-            utilisateurId: inventaireExistant.utilisateurId,
+            utilisateurId: utilisateurValidateurId,
         }, tx);
 
         return tx.inventaire.update({
             where: { id },
-            data: { statut: "VALIDE" },
+            data: {
+                statut: "VALIDE",
+                utilisateurValidateurId,
+                dateValidation: new Date(),
+            },
             include: { lignesInventaire: true },
         });
     });
