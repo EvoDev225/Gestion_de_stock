@@ -1,4 +1,3 @@
-// app/api/lots/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import {
     obtenirLotParId,
@@ -11,6 +10,9 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const lot = await obtenirLotParId(id);
 
@@ -25,6 +27,9 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const body = await request.json();
 

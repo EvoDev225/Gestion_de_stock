@@ -1,8 +1,11 @@
-// app/api/lots/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { listerLots, creerLot } from "@/lib/services/lot.service";
+import { exigerRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
+    const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const produitId = request.nextUrl.searchParams.get("produitId") ?? undefined;
     const varianteId = request.nextUrl.searchParams.get("varianteId") ?? undefined;
     const lots = await listerLots(produitId, varianteId);
@@ -10,6 +13,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const body = await request.json();
 
     if (!body.numeroLot || !body.dateExpiration || body.quantite === undefined || !body.dateReception) {
