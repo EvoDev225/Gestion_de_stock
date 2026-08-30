@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { obtenirSession } from "@/lib/auth";
+import { exigerRole } from "@/lib/auth";
 import {
     obtenirValeurStock,
     obtenirRepartitionParCategorie,
@@ -10,10 +10,8 @@ import {
 } from "@/lib/services/statistiques/dashboard.service";
 
 export async function GET(request: NextRequest) {
-    const session = await obtenirSession(request);
-    if (!session) {
-        return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
-    }
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
 
     const [
         valeurStock,
