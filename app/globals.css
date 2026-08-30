@@ -33,6 +33,8 @@ body {
   --warning-foreground: #663500;
   --destructive: #BA1A1A;
   --destructive-foreground: #FFDAD6;
+   --brand-panel: #00513A;
+  --brand-panel-foreground: #FCF9F8;
   
   /* --- Variables existantes conservées --- */
   --background-subtle: #F4F3F1;
@@ -79,6 +81,8 @@ body {
   --warning-foreground: #FFEFD6; /* Ajusté pour meilleur contraste sur fond sombre */
   --destructive: #BA1A1A;
   --destructive-foreground: #FFDAD6;
+   --brand-panel: #00513A; /* volontairement identique, ne change pas avec le thème */
+  --brand-panel-foreground: #FCF9F8;
   
   /* --- Variables existantes conservées --- */
   --background-subtle: #171714;
@@ -187,6 +191,8 @@ body {
   --spacing-section-gap: 64px;
   --spacing-container-margin: 40px;
   --spacing-gutter: 24px;
+  --color-brand-panel: var(--brand-panel);
+--color-brand-panel-foreground: var(--brand-panel-foreground);
 }
 
 @layer utilities {
