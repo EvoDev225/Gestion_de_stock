@@ -52,9 +52,9 @@ export default function StatsSection() {
                     viewport={{ once: true, margin: "-50px" }}
                     className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border"
                 >
-                    {stats.map((stat, index) => (
+                    {stats.map((stat) => (
                         <motion.div
-                            key={index}
+                            key={stat.label}
                             variants={itemVariants}
                             className="flex flex-col items-center justify-center py-8 md:py-4 px-4 text-center"
                         >

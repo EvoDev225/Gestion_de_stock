@@ -12,7 +12,7 @@ export default function LoginPage() {
                         href="/"
                         className="font-display text-sm font-medium text-foreground hover:opacity-80 transition-opacity inline-block"
                     >
-                        Stockflow
+                        CorticalEvo
                     </Link>
                 </div>
 

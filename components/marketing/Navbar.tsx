@@ -37,7 +37,7 @@ export default function Navbar() {
             </div>
             
             <div className="flex items-center gap-6">
-                <a href="#" className="hidden md:block text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                <a href="/login" className="hidden md:block text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                     Connexion
                 </a>
                 
