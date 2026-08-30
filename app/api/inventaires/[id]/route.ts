@@ -7,6 +7,9 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const inventaire = await obtenirInventaireParId(id);
 
@@ -23,6 +26,7 @@ export async function PATCH(
 ) {
     const acces = await exigerRole(request, ["ADMIN"]);
     if ("erreur" in acces) return acces.erreur;
+    
     const { id } = await params;
     const body = await request.json();
 
@@ -31,7 +35,8 @@ export async function PATCH(
     }
 
     try {
-        const inventaire = await validerInventaire(id, body.saisies);
+        // Injection de acces.session.id comme 3ème paramètre (validateur)
+        const inventaire = await validerInventaire(id, body.saisies, acces.session.id);
         return NextResponse.json(inventaire);
     } catch (error) {
         return NextResponse.json({ error: (error as Error).message }, { status: 400 });
