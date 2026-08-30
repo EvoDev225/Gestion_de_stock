@@ -10,6 +10,9 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const categorie = await obtenirCategorieParId(id);
 
@@ -24,6 +27,9 @@ export async function PATCH(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
     const body = await request.json();
     const categorie = await modifierCategorie(id, body);
