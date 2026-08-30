@@ -62,8 +62,9 @@ model Utilisateur {
   mouvementsStock       MouvementStock[]
   retours               Retour[]
   ventes                Vente[]
-  inventaires           Inventaire[]
   journalActivites      JournalActivite[]
+  inventairesLances  Inventaire[] @relation("InventaireLanceur")
+  inventairesValides Inventaire[] @relation("InventaireValidateur")
   commandesFournisseur  CommandeFournisseur[]
   receptionsFournisseur ReceptionFournisseur[]
   rapportsActivite      RapportActivite[]
@@ -93,6 +94,7 @@ model Produit {
   nom                       String
   sku                       String                     @unique
   description               String?
+  imageUrl                  String?
   prixAchat                 Decimal                    @db.Decimal(10, 2)
   prixVente                 Decimal                    @db.Decimal(10, 2)
   seuilMinimum              Int                        @default(0)
@@ -108,7 +110,7 @@ model Produit {
   ligneVentes               LigneVente[]
   categorieId               String?
   categorie                 Categorie?                 @relation(fields: [categorieId], references: [id], onDelete: SetNull)
-}
+} 
 
 model Variante {
   id               String            @id @default(uuid())
@@ -265,12 +267,18 @@ model LigneRetour {
 }
 
 model Inventaire {
-  id               String            @id @default(uuid())
-  dateLancement    DateTime          @default(now())
-  statut           StatutInventaire  @default(EN_COURS)
-  utilisateurId    String
-  utilisateur      Utilisateur       @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
-  lignesInventaire LigneInventaire[]
+  id                      String            @id @default(uuid())
+  dateLancement           DateTime          @default(now())
+  statut                  StatutInventaire  @default(EN_COURS)
+  
+  utilisateurId           String
+  utilisateur             Utilisateur       @relation("InventaireLanceur", fields: [utilisateurId], references: [id], onDelete: Restrict)
+  
+  utilisateurValidateurId String?
+  utilisateurValidateur   Utilisateur?      @relation("InventaireValidateur", fields: [utilisateurValidateurId], references: [id], onDelete: Restrict)
+  dateValidation          DateTime?
+
+  lignesInventaire        LigneInventaire[]
 }
 
 model LigneInventaire {
