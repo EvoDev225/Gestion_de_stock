@@ -277,7 +277,7 @@ export async function genererResumeIA(texteActivite: string): Promise<string> {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
         const prompt = `Tu es un assistant de gestion de stock et de commerce rédigé pour le gérant de l'établissement.
 Analyse les données d'activité de la période ci-dessous et rédige un rapport d'activité synthétique, professionnel, concis et structuré en français.
