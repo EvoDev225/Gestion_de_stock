@@ -1,6 +1,5 @@
-// app/api/dashboard/summary/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { exigerRole } from "@/lib/auth"; // adapte le chemin exact si différent
+import { exigerRole } from "@/lib/auth";
 import {
     obtenirNombreProduitsEnStock,
     obtenirProduitsASurveiller,
@@ -8,7 +7,7 @@ import {
     obtenirCommandesEnAttente,
     obtenirEvolutionVentes,
     obtenirActionsEnAttente,
-} from "@/lib/services/statistiques/dashboard.service"; // adapte le chemin exact
+} from "@/lib/services/statistiques/dashboard.service";
 
 export async function GET(request: NextRequest) {
     const resultat = await exigerRole(request, ["ADMIN"]);
