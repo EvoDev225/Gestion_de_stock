@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Package,
@@ -87,6 +87,8 @@ export default function AdminSidebar({
     userRole = "Administrateur",
 }: AdminSidebarProps) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const {
         isMobileOpen,
         closeMobile,
@@ -108,6 +110,19 @@ export default function AdminSidebar({
     const isSectionOpen = (section: NavSection) => {
         if (section.title in openSections) return openSections[section.title];
         return section.items.some((item) => item.href === pathname);
+    };
+
+    const handleLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/login");
+            router.refresh(); // force le middleware à revalider l'absence de session
+        } catch (error) {
+            console.error("Erreur lors de la déconnexion :", error);
+            setIsLoggingOut(false);
+        }
     };
 
     return (
@@ -228,7 +243,9 @@ export default function AdminSidebar({
                         </div>
                         <button
                             type="button"
-                            className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer md:hidden lg:block"
+                            onClick={handleLogout}
+                            disabled={isLoggingOut}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:hidden lg:block"
                             aria-label="Déconnexion"
                         >
                             <LogOut className="w-5 h-5" />
