@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { useTheme } from "next-themes";
-import { Search, Bell } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
+
+import { Search, Bell, Menu } from "lucide-react";
 import ThemeToggle from "../shared/ThemeToggle";
+import { useSidebar } from "@/components/contexts/SidebarContext";
 
 interface AdminTopbarProps {
     userName?: string;
@@ -19,10 +20,9 @@ export default function AdminTopbar({
     onSearch,
 }: AdminTopbarProps) {
     const [searchQuery, setSearchQuery] = useState("");
-    const { theme, setTheme } = useTheme();
+    const { openMobile } = useSidebar();
 
-    // Gestionnaire de recherche contrôlée
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchQuery(value);
         if (onSearch) {
@@ -30,7 +30,6 @@ export default function AdminTopbar({
         }
     };
 
-    // Génération des initiales pour l'avatar de secours
     const getInitials = (name: string): string => {
         return name
             .split(" ")
@@ -41,10 +40,19 @@ export default function AdminTopbar({
     };
 
     return (
-        /* Note : ml-64 décale la topbar sur la droite pour laisser la place à la sidebar fixe (w-64) */
-        <header className="h-20 ml-64 bg-background/80 backdrop-blur-xl border-b border-border/30 flex justify-between items-center px-8 sticky top-0 z-40 transition-colors">
+        <header className="h-20 ml-0 md:ml-20 lg:ml-64 bg-background/80 backdrop-blur-xl border-b border-border/30 flex justify-between items-center px-4 md:px-8 sticky top-0 z-40 transition-colors">
+            {/* Hamburger — mobile uniquement, ouvre le drawer */}
+            <button
+                type="button"
+                onClick={openMobile}
+                className="md:hidden p-2 -ml-2 mr-2 text-muted-foreground hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+                aria-label="Ouvrir le menu"
+            >
+                <Menu className="w-5 h-5" />
+            </button>
+
             {/* Barre de recherche */}
-            <div className="relative w-96">
+            <div className="relative w-full max-w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                 <input
                     type="text"
@@ -57,7 +65,6 @@ export default function AdminTopbar({
 
             {/* Actions (Notifications, Thème, Profil) */}
             <div className="flex items-center gap-4">
-                {/* Notifications */}
                 <button
                     type="button"
                     className="relative p-2 text-muted-foreground hover:bg-muted/50 rounded-full transition-colors cursor-pointer"
@@ -69,13 +76,10 @@ export default function AdminTopbar({
                     )}
                 </button>
 
-                {/* Bouton de bascule de thème (clair / sombre) */}
                 <ThemeToggle />
 
-                {/* Séparateur */}
-                <div className="h-8 w-px bg-border/30 mx-2" />
+                <div className="h-8 w-px bg-border/30 mx-2 hidden sm:block" />
 
-                {/* Bloc Profil utilisateur */}
                 <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-foreground hidden md:block">
                         {userName}
