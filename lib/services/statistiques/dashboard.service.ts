@@ -473,3 +473,103 @@ export async function obtenirDerniersEcartsInventaire(limite: number = 10): Prom
         justification: l.justification,
     }));
 }
+/**
+ * Nombre de produits actifs actuellement suivis en stock
+ */
+export async function obtenirNombreProduitsEnStock(): Promise<number> {
+    return prisma.produit.count({
+        where: { archive: false },
+    });
+}
+
+/**
+ * Somme des ventes validées depuis le début du mois en cours
+ */
+export async function obtenirVentesDuMois(): Promise<number> {
+    const debutMois = new Date();
+    debutMois.setDate(1);
+    debutMois.setHours(0, 0, 0, 0);
+
+    const ventes = await prisma.vente.findMany({
+        where: {
+            dateVente: { gte: debutMois },
+            statut: "VALIDEE",
+        },
+        select: { montantTotal: true },
+    });
+
+    return ventes.reduce((acc, v) => acc + Number(v.montantTotal), 0);
+}
+
+export interface ActionEnAttente {
+    id: string;
+    type: "inventaire" | "commande_retard" | "peremption";
+    titre: string;
+    description: string;
+}
+
+const SEUIL_JOURS_RETARD_COMMANDE = 3;
+
+/**
+ * Liste agrégée des actions en attente pour le dashboard admin :
+ * inventaires non validés, commandes fournisseurs en retard, alertes péremption
+ */
+export async function obtenirActionsEnAttente(): Promise<ActionEnAttente[]> {
+    const actions: ActionEnAttente[] = [];
+
+    // 1. Inventaires en cours (non validés)
+    const inventairesEnCours = await prisma.inventaire.findMany({
+        where: { statut: "EN_COURS" },
+        include: { _count: { select: { lignesInventaire: true } } },
+        orderBy: { dateLancement: "asc" },
+    });
+
+    for (const inv of inventairesEnCours) {
+        actions.push({
+            id: `inventaire-${inv.id}`,
+            type: "inventaire",
+            titre: "Inventaire à valider",
+            description: `${inv._count.lignesInventaire} article(s) comptés`,
+        });
+    }
+
+    // 2. Commandes fournisseurs en retard (non reçues depuis plus de N jours)
+    const dateLimite = new Date();
+    dateLimite.setDate(dateLimite.getDate() - SEUIL_JOURS_RETARD_COMMANDE);
+
+    const commandesEnRetard = await prisma.commandeFournisseur.findMany({
+        where: {
+            statut: { in: ["EN_ATTENTE", "ENVOYEE"] },
+            dateCommande: { lte: dateLimite },
+        },
+        include: { fournisseur: { select: { nom: true } } },
+        orderBy: { dateCommande: "asc" },
+    });
+
+    for (const cmd of commandesEnRetard) {
+        const joursRetard = Math.floor(
+            (Date.now() - cmd.dateCommande.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        actions.push({
+            id: `commande-${cmd.id}`,
+            type: "commande_retard",
+            titre: "Commande fournisseur en retard",
+            description: `${cmd.fournisseur.nom} - Retard ${joursRetard}j`,
+        });
+    }
+
+    // 3. Alertes péremption (réutilise la fonction existante)
+    const alertes = await obtenirProduitsASurveiller();
+    const alertesPeremption = alertes.filter((a) => a.statut === "peremption");
+
+    alertesPeremption.forEach((alerte, index) => {
+        actions.push({
+            id: `peremption-${index}-${alerte.nom}`,
+            type: "peremption",
+            titre: alerte.nom,
+            description: alerte.info,
+        });
+    });
+
+    return actions;
+}

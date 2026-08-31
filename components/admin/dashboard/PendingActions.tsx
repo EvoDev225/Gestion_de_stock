@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ClipboardCheck, Truck, ClipboardX } from "lucide-react";
+import { ClipboardCheck, Truck, ClipboardX, CalendarClock } from "lucide-react";
 
 
-export type PendingActionType = "inventaire" | "commande_retard" | "retour";
+export type PendingActionType = "inventaire" | "commande_retard" | "peremption";
 
 export interface PendingAction {
     id: string;
@@ -30,10 +30,10 @@ const ACTION_CONFIG: Record<
         icon: Truck,
         colorClass: "text-destructive",
     },
-    retour: {
-        icon: ClipboardX,
+    peremption: {
+        icon: CalendarClock,
         colorClass: "text-primary",
-    },
+},
 };
 
 export default function PendingActions({

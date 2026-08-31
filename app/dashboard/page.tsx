@@ -1,11 +1,5 @@
 // app/dashboard/page.tsx
 import { cookies, headers } from "next/headers";
-import { StockValueCard } from "@/components/dashboard/StockValueCard";
-import {VentesDuJourCard} from "@/components/dashboard/VentesDuJourCard";
-import {WatchlistBar} from "@/components/dashboard/WatchlistBar";
-import {CategoryBreakdownCard} from "@/components/dashboard/CategoryBreakdownCard";
-import {CommandesEnAttenteCard} from "@/components/dashboard/CommandesEnAttenteCard";
-import {RecentActivityCard} from "@/components/dashboard/RecentActivityCard";
 
 async function obtenirStatistiquesDashboard() {
     const cookieStore = await cookies();
@@ -48,23 +42,7 @@ export default async function DashboardPage() {
     return (
         <div className="flex flex-col gap-4">
             {/* Ligne 1 : Valeurs clés */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <StockValueCard valeurStock={stats.valeurStock} />
-                <VentesDuJourCard
-                    montantTotal={stats.ventesDuJour.montantTotal}
-                    nombre={stats.ventesDuJour.nombre}
-                />
-            </div>
-
-            {/* Ligne 2 : Watchlist */}
-            <WatchlistBar produits={stats.produitsASurveiller || []} />
-
-            {/* Ligne 3 : Détails et activité */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.3fr_1fr_1fr]">
-                <CategoryBreakdownCard categories={stats.repartitionCategories || []} />
-                <CommandesEnAttenteCard nombre={stats.commandesEnAttente || 0} />
-                <RecentActivityCard resume={stats.activiteRecente || "Aucune activité récente à signaler."} />
-            </div>
+            
         </div>
     );
 }
