@@ -1,9 +1,9 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/components/theme/ThemeProvider";
 
 export default function ThemeToggle() {
     const [mounted, setMounted] = useState(false);
@@ -46,7 +46,6 @@ export default function ThemeToggle() {
                     )}
                 </AnimatePresence>
             ) : (
-                /* Placeholder de même taille pour éviter les sauts de layout avant l'hydratation */
                 <div className="w-5 h-5" />
             )}
         </button>

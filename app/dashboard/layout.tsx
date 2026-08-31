@@ -1,13 +1,10 @@
-// app/dashboard/layout.tsx
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { obtenirSessionServeur } from "@/lib/auth";
+import { SidebarProvider } from "@/components/contexts/SidebarContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
 
-// TODO: à confirmer une fois lib/auth.ts collé — nom exact de la fonction
-// et forme du retour (on sait déjà que le payload JWT contient id / role / nom,
-// pas d'email).
 export default async function DashboardLayout({
     children,
 }: {
@@ -22,15 +19,16 @@ export default async function DashboardLayout({
     const roleAffiche = session.role === "ADMIN" ? "Administrateur" : session.role;
 
     return (
-        <div className="min-h-screen bg-background">
-            {/* AdminSidebar est déjà fixed left-0 top-0 h-screen w-64 */}
-            <AdminSidebar userName={session.nom} userRole={roleAffiche} />
+        <SidebarProvider>
+            <div className="min-h-screen bg-background">
+                <AdminSidebar userName={session.nom} userRole={roleAffiche} />
+                <AdminTopbar userName={session.nom} userRole={roleAffiche} />
 
-            {/* AdminTopbar porte déjà ml-64 en interne */}
-            <AdminTopbar userName={session.nom} userRole={roleAffiche} />
-
-            {/* ml-64 pour compenser la sidebar fixe (même valeur que la Topbar) */}
-            <main className="ml-64 px-8 py-6">{children}</main>
-        </div>
+                {/* La marge suit la largeur réelle de la sidebar à chaque breakpoint */}
+                <main className="ml-0 md:ml-20 lg:ml-64 px-4 md:px-6 lg:px-8 py-6 transition-[margin] duration-300">
+                    {children}
+                </main>
+            </div>
+        </SidebarProvider>
     );
 }

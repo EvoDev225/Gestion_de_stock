@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-import { useTheme } from "next-themes";
+
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import ThemeToggle from "../shared/ThemeToggle";
