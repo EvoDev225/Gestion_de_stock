@@ -1,14 +1,13 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
-
 import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 import ThemeToggle from "../shared/ThemeToggle";
 
 export default function Navbar() {
     const [mounted, setMounted] = useState(false);
-    const { theme, setTheme } = useTheme();
+    
 
     // Évite le mismatch d'hydratation
     useEffect(() => {
