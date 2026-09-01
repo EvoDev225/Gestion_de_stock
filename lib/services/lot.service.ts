@@ -34,7 +34,7 @@ export async function obtenirLotParId(id: string) {
 
 export async function creerLot(data: {
     numeroLot: string;
-    dateExpiration: Date;
+    dateExpiration?: Date;
     quantite: number;
     dateReception: Date;
     produitId?: string;
