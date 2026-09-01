@@ -13,10 +13,14 @@ export async function listerLots(produitId?: string, varianteId?: string) {
                     produit: true,
                 },
             },
+            _count: {
+                select: { mouvementStocks: true }, // 👈 ajouté — à vérifier vs schema.prisma
+            },
         },
         orderBy: { dateExpiration: "asc" },
     });
 }
+
 
 export async function obtenirLotParId(id: string) {
     return prisma.lot.findUnique({
