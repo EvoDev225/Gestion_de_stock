@@ -1,4 +1,4 @@
-export type TypeMouvement = "ENTREE" | "SORTIE" | "AJUSTEMENT" | "PERTE" | "DOMMAGE" ; // à compléter selon l'enum réel
+export type TypeMouvement = "ENTREE" | "SORTIE" | "AJUSTEMENT" | "PERTE" | "DOMMAGE";
 
 export interface MouvementStock {
     id: string;
@@ -15,3 +15,16 @@ export interface MouvementStock {
     lotId?: string | null;
     lot?: { id: string; numeroLot: string } | null;
 }
+
+interface TypeMouvementConfig {
+    label: string;
+    badgeClass: string;
+}
+
+export const TYPE_MOUVEMENT_CONFIG: Record<TypeMouvement, TypeMouvementConfig> = {
+    ENTREE: { label: "Entrée", badgeClass: "bg-primary/10 text-primary" },
+    SORTIE: { label: "Sortie", badgeClass: "bg-blue-500/10 text-blue-600" },
+    AJUSTEMENT: { label: "Ajustement", badgeClass: "bg-amber-500/10 text-amber-600" },
+    PERTE: { label: "Perte", badgeClass: "bg-destructive/10 text-destructive" },
+    DOMMAGE: { label: "Dommage", badgeClass: "bg-destructive/10 text-destructive" },
+};
