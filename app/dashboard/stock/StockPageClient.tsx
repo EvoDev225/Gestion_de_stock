@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import StockPageHeader from "@/components/stock/StockPageHeader";
 import StockTabs from "@/components/stock/StockTabs";
 import LotsToolbar from "@/components/stock/LotsToolbar";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import LotsTable from "@/components/stock/LotsTable";
 import LotCard from "@/components/stock/LotCard";
 import LotFormModal from "@/components/stock/LotFormModal";
@@ -37,7 +38,7 @@ export default function StockPageClient() {
     // ── Modal lot ──
     const [isLotModalOpen, setIsLotModalOpen] = useState(false);
     const [lotEnEdition, setLotEnEdition] = useState<Lot | null>(null);
-
+    const [lotASupprimer, setLotASupprimer] = useState<Lot | null>(null);
     // ── Chargement ──
     const fetchLots = useCallback(async () => {
         setIsLoadingLots(true);
@@ -171,18 +172,21 @@ export default function StockPageClient() {
         await fetchLots();
     };
 
-    const handleDeleteLot = async (lot: Lot) => {
-        const confirmed = window.confirm(
-            `Supprimer le lot "${lot.numeroLot}" ? Cette action est irréversible.`
-        );
-        if (!confirmed) return;
+    const handleOpenDeleteLot = (lot: Lot) => {
+        setLotASupprimer(lot);
+    };
+
+    const confirmDeleteLot = async () => {
+        if (!lotASupprimer) return;
 
         try {
-            const res = await fetch(`/api/lots/${lot.id}`, { method: "DELETE" });
+            const res = await fetch(`/api/lots/${lotASupprimer.id}`, { method: "DELETE" });
             if (!res.ok) throw new Error("Erreur lors de la suppression du lot");
             await fetchLots();
         } catch (error) {
             console.error(error);
+        } finally {
+            setLotASupprimer(null);
         }
     };
 
@@ -215,7 +219,7 @@ export default function StockPageClient() {
                             <LotsTable
                                 lots={lotsPagePagines}
                                 onEdit={handleOpenEditLot}
-                                onDelete={handleDeleteLot}
+                                onDelete={handleOpenDeleteLot}   // 👈 avant: handleDeleteLot
                             />
 
                             <div className="flex flex-col gap-3 lg:hidden">
@@ -229,7 +233,7 @@ export default function StockPageClient() {
                                             key={lot.id}
                                             lot={lot}
                                             onEdit={handleOpenEditLot}
-                                            onDelete={handleDeleteLot}
+                                            onDelete={handleOpenDeleteLot}   // 👈 avant: handleDeleteLot
                                         />
                                     ))
                                 )}
@@ -280,7 +284,14 @@ export default function StockPageClient() {
                     )}
                 </>
             )}
-
+            <ConfirmDialog
+                isOpen={lotASupprimer !== null}
+                title="Supprimer ce lot ?"
+                message={`Le lot "${lotASupprimer?.numeroLot}" sera supprimé définitivement. Cette action est irréversible.`}
+                confirmLabel="Supprimer"
+                onConfirm={confirmDeleteLot}
+                onCancel={() => setLotASupprimer(null)}
+            />
             <LotFormModal
                 key={lotEnEdition?.id ?? "nouveau-lot"}
                 isOpen={isLotModalOpen}
