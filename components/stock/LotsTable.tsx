@@ -69,7 +69,7 @@ export default function LotsTable({ lots, onEdit, onDelete }: LotsTableProps) {
                                                     {lot.variante.nomVariante}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
-                                                    {lot.produit?.nom}
+                                                    {lot.variante.produit?.nom ?? "—"}  {/* 👈 avant: lot.produit?.nom */}
                                                 </div>
                                             </>
                                         ) : (

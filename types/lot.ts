@@ -7,5 +7,12 @@ export interface Lot {
     produitId?: string | null;
     varianteId?: string | null;
     produit?: { id: string; nom: string; sku: string } | null;
-    variante?: { id: string; nomVariante: string; skuVariante: string } | null;
+    _count?: { mouvementsStock: number };
+    variante?: {
+        id: string;
+        nomVariante: string;
+        skuVariante: string;
+        produit?: { id: string; nom: string; sku: string } | null;
+         // 👈 ajouté
+    } | null;
 }
