@@ -127,7 +127,7 @@ model Variante {
 model Lot {
   id              String           @id @default(uuid())
   numeroLot       String
-  dateExpiration  DateTime
+  dateExpiration  DateTime?
   quantite        Int
   dateReception   DateTime
   produitId       String?
