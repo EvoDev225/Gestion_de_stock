@@ -6,12 +6,30 @@ export async function listerLots(produitId?: string, varianteId?: string) {
             ...(produitId && { produitId }),
             ...(varianteId && { varianteId }),
         },
+        include: {
+            produit: true,
+            variante: {
+                include: {
+                    produit: true,
+                },
+            },
+        },
         orderBy: { dateExpiration: "asc" },
     });
 }
 
 export async function obtenirLotParId(id: string) {
-    return prisma.lot.findUnique({ where: { id } });
+    return prisma.lot.findUnique({
+        where: { id },
+        include: {
+            produit: true,
+            variante: {
+                include: {
+                    produit: true,
+                },
+            },
+        },
+    });
 }
 
 export async function creerLot(data: {
@@ -31,14 +49,35 @@ export async function creerLot(data: {
         );
     }
 
-    return prisma.lot.create({ data });
+    return prisma.lot.create({
+        data,
+        include: {
+            produit: true,
+            variante: {
+                include: {
+                    produit: true,
+                },
+            },
+        },
+    });
 }
 
 export async function modifierLot(
     id: string,
     data: { numeroLot?: string; dateExpiration?: Date; quantite?: number }
 ) {
-    return prisma.lot.update({ where: { id }, data });
+    return prisma.lot.update({
+        where: { id },
+        data,
+        include: {
+            produit: true,
+            variante: {
+                include: {
+                    produit: true,
+                },
+            },
+        },
+    });
 }
 
 export async function supprimerLot(id: string) {
