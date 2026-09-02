@@ -270,10 +270,8 @@ model Inventaire {
   id                      String            @id @default(uuid())
   dateLancement           DateTime          @default(now())
   statut                  StatutInventaire  @default(EN_COURS)
-  
   utilisateurId           String
   utilisateur             Utilisateur       @relation("InventaireLanceur", fields: [utilisateurId], references: [id], onDelete: Restrict)
-  
   utilisateurValidateurId String?
   utilisateurValidateur   Utilisateur?      @relation("InventaireValidateur", fields: [utilisateurValidateurId], references: [id], onDelete: Restrict)
   dateValidation          DateTime?

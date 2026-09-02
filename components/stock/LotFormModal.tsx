@@ -79,25 +79,25 @@ export default function LotFormModal({
     };
 
     const handleSubmit = async () => {
-        if (!produitId || !numeroLot.trim()) return;
+    if (!produitId || !numeroLot.trim()) return;
 
-        setIsSubmitting(true);
-        try {
-            await onSubmit({
-                numeroLot: numeroLot.trim(),
-                quantite,
-                dateReception,
-                dateExpiration,
-                produitId,
-                varianteId,
-            });
-            onClose();
-        } catch (error) {
-            console.error("Erreur lors de la soumission du lot :", error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+    setIsSubmitting(true);
+    try {
+        await onSubmit({
+            numeroLot: numeroLot.trim(),
+            quantite,
+            dateReception,
+            dateExpiration,
+            produitId: varianteId ? null : produitId,   // 👈 mutuellement exclusif
+            varianteId,
+        });
+        onClose();
+    } catch (error) {
+        console.error("Erreur lors de la soumission du lot :", error);
+    } finally {
+        setIsSubmitting(false);
+    }
+};
 
     return (
         <div
