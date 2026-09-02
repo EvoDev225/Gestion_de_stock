@@ -6,6 +6,7 @@ import {
     Pencil,
     Layers,
     Archive,
+    ArchiveRestore,
     PackageX,
 } from "lucide-react";
 import type { Produit } from "@/types/produit";
@@ -25,7 +26,7 @@ export default function ProductsTable({
     onArchiveToggle,
 }: ProductsTableProps) {
     return (
-        <div className="hidden lg:block rounded-xl border border-border bg-card overflow-hidden">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-left">
                 <thead className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase">
                     <tr>
@@ -59,7 +60,7 @@ export default function ProductsTable({
                                 <td className="py-3 px-6">
                                     <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
                                         {produit.imageUrl ? (
-                                            <Image 
+                                            <Image
                                                 src={produit.imageUrl}
                                                 alt={produit.nom}
                                                 fill
@@ -128,7 +129,11 @@ export default function ProductsTable({
                                             className={`h-1.5 w-1.5 rounded-full ${!produit.archive ? "bg-primary" : "bg-muted-foreground"
                                                 }`}
                                         />
-                                        {!produit.archive ? "Actif" : "Archivé"}
+                                        {produit.archive ? (
+                                            <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
+                                        ) : (
+                                            <Archive className="h-4 w-4" aria-hidden="true" />
+                                        )}
                                     </span>
                                 </td>
 

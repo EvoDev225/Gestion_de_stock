@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 
 export async function listerProduits() {
-  return prisma.produit.findMany({
-    where: { archive: false },
-    include: { categorie: true },
-    orderBy: { nom: "asc" },
-  });
+    return prisma.produit.findMany({
+        include: { categorie: true },
+        orderBy: { nom: "asc" },
+    });
 }
+
 
 export async function obtenirProduitParId(id: string) {
   return prisma.produit.findUnique({
@@ -54,4 +54,10 @@ export async function archiverProduit(id: string) {
     where: { id },
     data: { archive: true },
   });
+}
+export async function desarchiverProduit(id: string) {
+    return prisma.produit.update({
+        where: { id },
+        data: { archive: false },
+    });
 }

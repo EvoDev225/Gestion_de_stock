@@ -143,18 +143,24 @@ export default function ProductsPageClient() {
     };
 
     const handleArchiveToggle = async (produit: Produit) => {
-        try {
-            const res = await fetch(`/api/produits/${produit.id}/archive`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ archive: !produit.archive }),
-            });
-            if (!res.ok) throw new Error("Erreur lors du changement de statut");
-            await fetchProduits();
-        } catch (error) {
-            console.error(error);
+    try {
+        const url = produit.archive
+            ? `/api/produits/${produit.id}/desarchiver`
+            : `/api/produits/${produit.id}`;
+        const method = produit.archive ? "PATCH" : "DELETE";
+
+        const res = await fetch(url, { method });
+
+        if (!res.ok) {
+            const errorBody = await res.json().catch(() => ({}));
+            throw new Error(errorBody.error ?? `Erreur ${res.status} lors du changement de statut`);
         }
-    };
+
+        await fetchProduits();
+    } catch (error) {
+        console.error(error);
+    }
+};
 
     // ── Actions variantes ──
     const handleOpenVariantsPanel = async (produit: Produit) => {
