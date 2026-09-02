@@ -182,3 +182,39 @@ export async function validerInventaire(
         });
     });
 }
+
+export async function ajouterLigneInventaire(
+    inventaireId: string,
+    produitId: string,
+    varianteId: string | null
+) {
+    const inventaire = await prisma.inventaire.findUniqueOrThrow({
+        where: { id: inventaireId },
+    });
+
+    if (inventaire.statut !== "EN_COURS") {
+        throw new Error("Impossible d'ajouter une ligne à un inventaire déjà validé");
+    }
+
+    let quantiteTheorique: number;
+
+    if (varianteId) {
+        const lots = await prisma.lot.findMany({ where: { varianteId } });
+        quantiteTheorique = lots.reduce((total, lot) => total + lot.quantite, 0);
+    } else {
+        const produit = await prisma.produit.findUniqueOrThrow({ where: { id: produitId } });
+        quantiteTheorique = produit.quantiteStock;
+    }
+
+    return prisma.ligneInventaire.create({
+        data: {
+            inventaireId,
+            produitId,
+            varianteId,
+            quantiteTheorique,
+            quantitePhysique: 0,
+            ecart: 0,
+        },
+        include: { produit: true, variante: true },
+    });
+}
