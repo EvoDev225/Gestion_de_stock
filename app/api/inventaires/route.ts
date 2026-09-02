@@ -10,11 +10,10 @@ export async function GET(request: NextRequest) {
     const inventaires = await listerInventaires();
     return NextResponse.json(inventaires);
 }
-
 export async function POST(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
     if ("erreur" in acces) return acces.erreur;
-    
+
     const body = await request.json();
 
     if (!Array.isArray(body.produitIds) || body.produitIds.length === 0) {
@@ -24,11 +23,16 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    // On utilise l'ID de la session, on l'injecte dans le payload final.
-    const inventaire = await lancerInventaire({
-        utilisateurId: acces.session.id,
-        produitIds: body.produitIds,
-    });
-    
-    return NextResponse.json(inventaire, { status: 201 });
+    try {
+        // On utilise l'ID de la session, on l'injecte dans le payload final.
+        const inventaire = await lancerInventaire({
+            utilisateurId: acces.session.id,
+            produitIds: body.produitIds,
+        });
+
+        return NextResponse.json(inventaire, { status: 201 });
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur lors du lancement de l'inventaire";
+        return NextResponse.json({ error: message }, { status: 409 });
+    }
 }

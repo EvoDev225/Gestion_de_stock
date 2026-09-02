@@ -24,10 +24,22 @@ export async function lancerInventaire(data: {
         throw new Error("Un inventaire doit porter sur au moins un produit");
     }
 
+    const inventaireEnCours = await prisma.inventaire.findFirst({
+        where: { statut: "EN_COURS" },
+    });
+
+    if (inventaireEnCours) {
+        throw new Error(
+            "Un inventaire est déjà en cours. Il doit être validé avant d'en lancer un nouveau."
+        );
+    }
+
     const produits = await prisma.produit.findMany({
         where: { id: { in: data.produitIds } },
         include: { variantes: { include: { lots: true } } },
     });
+
+    // ... reste inchangé
 
     // Produit sans variante -> 1 ligne sur le produit.
     // Produit avec variantes -> 1 ligne par variante, théorique = somme des lots.
