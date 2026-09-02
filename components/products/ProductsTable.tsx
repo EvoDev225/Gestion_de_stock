@@ -57,12 +57,13 @@ export default function ProductsTable({
                             >
                                 {/* Image */}
                                 <td className="py-3 px-6">
-                                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                                    <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
                                         {produit.imageUrl ? (
-                                            <Image
+                                            <Image 
                                                 src={produit.imageUrl}
                                                 alt={produit.nom}
-                                                className="h-full w-full object-cover"
+                                                fill
+                                                className="object-cover"
                                             />
                                         ) : (
                                             <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
@@ -119,8 +120,8 @@ export default function ProductsTable({
                                 <td className="py-3 px-6">
                                     <span
                                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${!produit.archive
-                                                ? "bg-primary/10 text-primary"
-                                                : "bg-muted text-muted-foreground"
+                                            ? "bg-primary/10 text-primary"
+                                            : "bg-muted text-muted-foreground"
                                             }`}
                                     >
                                         <span

@@ -231,47 +231,47 @@ export default function ProductsPageClient() {
             />
 
             {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground text-sm">
-                    Chargement des produits...
-                </div>
-            ) : (
-                <>
-                    {/* Desktop : tableau */}
-                    <ProductsTable
-                        produits={produitsPage}
-                        onEdit={handleOpenEditModal}
-                        onManageVariants={handleOpenVariantsPanel}
-                        onArchiveToggle={handleArchiveToggle}
-                    />
-
-                    {/* Mobile : cartes */}
-                    <div className="flex flex-col gap-3 lg:hidden">
-                        {produitsPage.length === 0 ? (
-                            <div className="text-center py-12 text-muted-foreground text-sm">
-                                Aucun produit trouvé
-                            </div>
-                        ) : (
-                            produitsPage.map((produit) => (
-                                <ProductCard
-                                    key={produit.id}
-                                    produit={produit}
-                                    onEdit={handleOpenEditModal}
-                                    onManageVariants={handleOpenVariantsPanel}
-                                    onArchiveToggle={handleArchiveToggle}
-                                />
-                            ))
-                        )}
+    <div className="text-center py-12 text-muted-foreground text-sm">
+        Chargement des produits...
+    </div>
+) : (
+    <>
+        {view === "table" ? (
+            <ProductsTable
+                produits={produitsPage}
+                onEdit={handleOpenEditModal}
+                onManageVariants={handleOpenVariantsPanel}
+                onArchiveToggle={handleArchiveToggle}
+            />
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {produitsPage.length === 0 ? (
+                    <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
+                        Aucun produit trouvé
                     </div>
+                ) : (
+                    produitsPage.map((produit) => (
+                        <ProductCard
+                            key={produit.id}
+                            produit={produit}
+                            onEdit={handleOpenEditModal}
+                            onManageVariants={handleOpenVariantsPanel}
+                            onArchiveToggle={handleArchiveToggle}
+                        />
+                    ))
+                )}
+            </div>
+        )}
 
-                    <ProductsPagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={produitsFiltres.length}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                        onPageChange={setCurrentPage}
-                    />
-                </>
-            )}
+        <ProductsPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={produitsFiltres.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+        />
+    </>
+)}
 
             <ProductFormModal
                 key={produitEnEdition?.id ?? "nouveau-produit"}
