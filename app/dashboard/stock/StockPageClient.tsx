@@ -177,18 +177,21 @@ export default function StockPageClient() {
     };
 
     const confirmDeleteLot = async () => {
-        if (!lotASupprimer) return;
+    if (!lotASupprimer) return;
 
-        try {
-            const res = await fetch(`/api/lots/${lotASupprimer.id}`, { method: "DELETE" });
-            if (!res.ok) throw new Error("Erreur lors de la suppression du lot");
-            await fetchLots();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLotASupprimer(null);
+    try {
+        const res = await fetch(`/api/lots/${lotASupprimer.id}`, { method: "DELETE" });
+        if (!res.ok) {
+            const errorBody = await res.json().catch(() => ({}));
+            throw new Error(errorBody.error ?? "Erreur lors de la suppression du lot");
         }
-    };
+        await fetchLots();
+    } catch (error) {
+        console.error(error);
+    } finally {
+        setLotASupprimer(null);
+    }
+};
 
     return (
         <div className="flex flex-col gap-6">
