@@ -10,6 +10,7 @@ interface ConfirmDialogProps {
     confirmLabel?: string;
     cancelLabel?: string;
     variant?: "danger" | "default";
+    isConfirming?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
 }
@@ -21,6 +22,7 @@ export default function ConfirmDialog({
     confirmLabel = "Confirmer",
     cancelLabel = "Annuler",
     variant = "danger",
+    isConfirming = false,
     onConfirm,
     onCancel,
 }: ConfirmDialogProps) {
@@ -81,10 +83,11 @@ export default function ConfirmDialog({
                     <button
                         type="button"
                         onClick={onConfirm}
+                        disabled={isConfirming}
                         className={
                             variant === "danger"
-                                ? "rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
-                                : "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                                ? "rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                : "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                         }
                     >
                         {confirmLabel}
