@@ -46,13 +46,19 @@ export async function DELETE(
 
     const { id } = await params;
 
-    try {
+        try {
         await supprimerFournisseur(id);
         return NextResponse.json({ success: true });
-    } catch (error) {
-        return NextResponse.json(
-            { error: "Suppression impossible : ce fournisseur a des commandes liées" },
-            { status: 409 }
-        );
+    } catch (error: any) {
+        if (error.code === "P2025") {
+            return NextResponse.json({ error: "Fournisseur introuvable" }, { status: 404 });
+        }
+        if (error.code === "P2003") {
+            return NextResponse.json(
+                { error: "Suppression impossible : ce fournisseur a des commandes liées" },
+                { status: 409 }
+            );
+        }
+        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }

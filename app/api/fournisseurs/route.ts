@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
     try {
         const fournisseur = await creerFournisseur(body);
         return NextResponse.json(fournisseur, { status: 201 });
-    } catch (error) {
-        return NextResponse.json({ error: "Email déjà utilisé" }, { status: 409 });
+    } catch (error: any) {
+        if (error.code === "P2002") {
+            return NextResponse.json({ error: "Email déjà utilisé" }, { status: 409 });
+        }
+        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }
