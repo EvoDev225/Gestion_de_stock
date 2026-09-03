@@ -52,13 +52,13 @@ const navSections: NavSection[] = [
         items: [
             { label: "Produits & Variantes", href: "/dashboard/products", icon: Package },
             { label: "Stock & Lots", href: "/dashboard/stock", icon: Boxes },
-            { label: "Inventaires", href: "/dashboard/inventory", icon: ClipboardCheck },
+            { label: "Inventaires", href: "/dashboard/inventaires", icon: ClipboardCheck },
         ],
     },
     {
         title: "Achats",
         items: [
-            { label: "Fournisseurs", href: "/dashboard/suppliers", icon: Truck },
+            { label: "Fournisseurs", href: "/dashboard/fournisseurs", icon: Truck },
             { label: "Commandes fournisseurs", href: "/dashboard/purchase-orders", icon: ShoppingCart },
             { label: "Réceptions", href: "/dashboard/receptions", icon: PackageCheck },
         ],
