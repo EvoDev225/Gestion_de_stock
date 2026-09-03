@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
     obtenirCommandeFournisseurParId,
     changerStatutCommande,
+    supprimerCommandeFournisseur,
 } from "@/lib/services/commande-fournisseur.service";
 import { exigerRole } from "@/lib/auth";
 
@@ -40,4 +41,23 @@ export async function PATCH(
 
     const commande = await changerStatutCommande(id, body.statut, acces.session.id);
     return NextResponse.json(commande);
+}
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const acces = await exigerRole(request, ["ADMIN"]);
+    if ("erreur" in acces) return acces.erreur;
+
+    const { id } = await params;
+
+    try {
+        await supprimerCommandeFournisseur(id, acces.session.id);
+        return NextResponse.json({ success: true });
+    } catch (error: any) {
+        if (error.message === "Commande introuvable") {
+            return NextResponse.json({ error: error.message }, { status: 404 });
+        }
+        return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    }
 }
