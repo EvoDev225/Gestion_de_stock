@@ -42,3 +42,21 @@ export async function modifierFournisseur(
         },
     });
 }
+export async function supprimerFournisseur(id: string) {
+    const fournisseur = await prisma.fournisseur.findUnique({
+        where: { id },
+        include: { _count: { select: { commandeFournisseurs: true } } },
+    });
+
+    if (!fournisseur) {
+        throw new Error("Fournisseur introuvable");
+    }
+
+    if (fournisseur._count.commandeFournisseurs > 0) {
+        throw new Error(
+            `Impossible de supprimer ce fournisseur : il est lié à ${fournisseur._count.commandeFournisseurs} commande(s)`
+        );
+    }
+
+    return prisma.fournisseur.delete({ where: { id } });
+}
