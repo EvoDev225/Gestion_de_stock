@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { calculerStockPourListeProduits } from "./stock.service";
 
 export async function listerProduits() {
     return prisma.produit.findMany({
@@ -7,6 +8,19 @@ export async function listerProduits() {
     });
 }
 
+export async function listerProduitsAvecStock() {
+    const produits = await prisma.produit.findMany({
+        include: { categorie: true, variantes: true },
+        orderBy: { nom: "asc" },
+    });
+
+    const stockParId = await calculerStockPourListeProduits(produits);
+
+    return produits.map((produit) => ({
+        ...produit,
+        stockCalcule: stockParId.get(produit.id) ?? 0,
+    }));
+}
 
 export async function obtenirProduitParId(id: string) {
   return prisma.produit.findUnique({
@@ -14,6 +28,7 @@ export async function obtenirProduitParId(id: string) {
     include: { categorie: true },
   });
 }
+
 
 export async function creerProduit(data: {
   nom: string;
