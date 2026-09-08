@@ -151,7 +151,7 @@ model Client {
   id        String  @id @default(uuid())
   nom       String
   email     String? @unique
-  telephone String?
+  telephone String
   adresse   String?
   ventes    Vente[]
 }
