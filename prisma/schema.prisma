@@ -70,8 +70,6 @@ model Utilisateur {
   rapportsActivite      RapportActivite[]
 }
 
-// ... (les autres modèles restent inchangés) ...
-
 model RapportActivite {
   id             String      @id @default(uuid())
   dateDebut      DateTime
@@ -119,6 +117,7 @@ model Variante {
   produitId        String
   produit          Produit           @relation(fields: [produitId], references: [id], onDelete: Cascade)
   lots             Lot[]
+  ligneVentes      LigneVente[]
   lignesInventaire LigneInventaire[]
   mouvementStocks  MouvementStock[]
   lignesRetour     LigneRetour[]
@@ -133,7 +132,7 @@ model Lot {
   produitId       String?
   varianteId      String?
   mouvementStocks MouvementStock[]
-
+  ligneVentes     LigneVente[]
   produit  Produit?  @relation(fields: [produitId], references: [id], onDelete: Cascade)
   variante Variante? @relation(fields: [varianteId], references: [id], onDelete: Cascade)
 }
@@ -188,13 +187,18 @@ model Vente {
 }
 
 model LigneVente {
-  id           String  @id @default(uuid())
-  quantite     Int
-  prixUnitaire Decimal @db.Decimal(10, 2)
-  venteId      String
-  produitId    String
-  vente        Vente   @relation(fields: [venteId], references: [id], onDelete: Cascade)
-  produit      Produit @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  id                       String    @id @default(uuid())
+  quantite                 Int
+  prixUnitaire             Decimal   @db.Decimal(10, 2)
+  stockInsuffisantConfirme Boolean   @default(false)
+  venteId                  String
+  produitId                String
+  varianteId               String?
+  lotId                    String?
+  vente                    Vente     @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  produit                  Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante                 Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  lot                      Lot?      @relation(fields: [lotId], references: [id], onDelete: Restrict)
 }
 
 model CommandeFournisseur {
