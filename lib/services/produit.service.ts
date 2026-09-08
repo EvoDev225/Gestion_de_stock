@@ -57,9 +57,10 @@ export async function modifierProduit(
     categorieId?: string;
   }
 ) {
+  const { nom, sku, description, prixAchat, prixVente, seuilMinimum, categorieId } = data;
   return prisma.produit.update({
     where: { id },
-    data,
+    data: { nom, sku, description, prixAchat, prixVente, seuilMinimum, categorieId },
     include: { categorie: true },
   });
 }
