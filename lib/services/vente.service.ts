@@ -5,6 +5,7 @@ export async function listerVentes() {
     return prisma.vente.findMany({
         include: {
             client: true,
+            utilisateur: true,
             ligneVentes: { include: { produit: true, variante: true, lot: true } },
         },
         orderBy: { dateVente: "desc" },
@@ -16,6 +17,7 @@ export async function obtenirVenteParId(id: string) {
         where: { id },
         include: {
             client: true,
+            utilisateur: true,
             ligneVentes: { include: { produit: true, variante: true, lot: true } },
         },
     });
@@ -95,25 +97,29 @@ export async function creerVente(data: {
 
         // 3. Création de la vente + ses lignes
         const vente = await tx.vente.create({
-            data: {
-                clientId,
-                utilisateurId: data.utilisateurId,
-                montantTotal,
-                modePaiement: data.modePaiement ?? "TOTAL",
-                dateVente: new Date(),
-                ligneVentes: {
-                    create: data.lignes.map((ligne) => ({
-                        produitId: ligne.produitId,
-                        varianteId: ligne.varianteId,
-                        lotId: ligne.lotId,
-                        quantite: ligne.quantite,
-                        prixUnitaire: ligne.prixUnitaire,
-                        stockInsuffisantConfirme: ligne.stockInsuffisantConfirme ?? false,
-                    })),
-                },
-            },
-            include: { ligneVentes: true },
-        });
+    data: {
+        clientId,
+        utilisateurId: data.utilisateurId,
+        montantTotal,
+        modePaiement: data.modePaiement ?? "TOTAL",
+        dateVente: new Date(),
+        ligneVentes: {
+            create: data.lignes.map((ligne) => ({
+                produitId: ligne.produitId,
+                varianteId: ligne.varianteId,
+                lotId: ligne.lotId,
+                quantite: ligne.quantite,
+                prixUnitaire: ligne.prixUnitaire,
+                stockInsuffisantConfirme: ligne.stockInsuffisantConfirme ?? false,
+            })),
+        },
+    },
+    include: {
+        client: true,
+        utilisateur: true,
+        ligneVentes: { include: { produit: true, variante: true, lot: true } },
+    },
+});
 
         // 4. Décrément du LOT uniquement — jamais Produit.quantiteStock
         // (stock réel = Σ lots, calculé à la volée côté stock.service.ts)
@@ -150,15 +156,15 @@ export async function creerVente(data: {
 }
 
 export async function annulerVente(id: string, utilisateurId: string) {
-    // Décision actée : annulation = trace comptable seulement.
-    // Le stock (Lot/MouvementStock) n'est jamais restitué ici — une vente
-    // annulée ne représente pas nécessairement un retour physique de
-    // marchandise. Un retour réel doit passer par le module Retour, qui
-    // gère la restitution du stock correctement.
     return prisma.$transaction(async (tx) => {
         const vente = await tx.vente.update({
             where: { id },
             data: { statut: "ANNULEE" },
+            include: {
+                client: true,
+                utilisateur: true,
+                ligneVentes: { include: { produit: true, variante: true, lot: true } },
+            },
         });
 
         await enregistrerActivite({
