@@ -45,7 +45,10 @@ export async function creerCommandeFournisseur(data: {
                     })),
                 },
             },
-            include: { ligneCommandeFournisseur: true },
+            include: {
+        fournisseur: true,
+        ligneCommandeFournisseur: { include: { produit: true } },
+    },
         });
 
         await enregistrerActivite({
@@ -120,6 +123,7 @@ export async function ajouterLigneCommande(
                 produitId: data.produitId,
                 quantiteCommande: data.quantiteCommande,
                 prixAchatUnitaire: data.prixAchatUnitaire,
+                include: { produit: true },
             },
         });
 
@@ -160,6 +164,7 @@ export async function modifierLigneCommande(
         const ligne = await tx.ligneCommandeFournisseur.update({
             where: { id: ligneId },
             data,
+            include: { produit: true },
         });
 
         await enregistrerActivite({
