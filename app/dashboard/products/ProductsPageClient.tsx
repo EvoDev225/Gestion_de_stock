@@ -97,8 +97,9 @@ export default function ProductsPageClient() {
         setCurrentPage(1);
     }, [searchValue, selectedCategoryId, statusFilter]);
 
+    // Stock bas calculé via stockCalcule (Σ lots), plus jamais quantiteStock
     const produitsEnStockBas = useMemo(
-        () => produits.filter((p) => !p.archive && p.quantiteStock <= p.seuilMinimum),
+        () => produits.filter((p) => !p.archive && p.stockCalcule <= p.seuilMinimum),
         [produits]
     );
 
@@ -121,9 +122,10 @@ export default function ProductsPageClient() {
         prixAchat: string;
         prixVente: string;
         seuilMinimum: number;
-        quantiteStock: number;
         imageUrl: string | null;
     }) => {
+        // quantiteStock retiré du payload : le stock ne se déclare plus
+        // que via la création d'un Lot (creerLot), jamais depuis ce formulaire.
         const isEdition = produitEnEdition !== null;
         const url = isEdition ? `/api/produits/${produitEnEdition!.id}` : "/api/produits";
         const method = isEdition ? "PATCH" : "POST";
