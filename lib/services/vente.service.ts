@@ -25,6 +25,7 @@ export async function creerVente(data: {
     clientId?: string;
     client?: { nom: string; telephone: string };
     utilisateurId: string;
+    modePaiement?: "TOTAL" | "CREDIT";
     lignes: {
         produitId: string;
         varianteId?: string;
@@ -98,6 +99,7 @@ export async function creerVente(data: {
                 clientId,
                 utilisateurId: data.utilisateurId,
                 montantTotal,
+                modePaiement: data.modePaiement ?? "TOTAL",
                 dateVente: new Date(),
                 ligneVentes: {
                     create: data.lignes.map((ligne) => ({
