@@ -169,8 +169,7 @@ export default function ProductsPageClient() {
         setProduitPourVariantes(produit);
         setIsVariantsPanelOpen(true);
         try {
-            // ⚠️ Hypothèse : GET /api/variantes accepte ?produitId=xxx pour filtrer.
-            // À corriger ici si la route réelle diffère (ex: /api/produits/[id]/variantes).
+    
             const res = await fetch(`/api/variantes?produitId=${produit.id}`);
             if (!res.ok) throw new Error("Erreur lors du chargement des variantes");
             const data: Variante[] = await res.json();
