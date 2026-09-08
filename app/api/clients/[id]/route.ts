@@ -14,13 +14,13 @@ export async function GET(
     if ("erreur" in acces) return acces.erreur;
 
     const { id } = await params;
-    const client = await obtenirClientParId(id);
 
-    if (!client) {
+    try {
+        const client = await obtenirClientParId(id);
+        return NextResponse.json(client);
+    } catch (error) {
         return NextResponse.json({ error: "Client introuvable" }, { status: 404 });
     }
-
-    return NextResponse.json(client);
 }
 
 export async function PATCH(
@@ -32,8 +32,22 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const client = await modifierClient(id, body);
-    return NextResponse.json(client);
+
+    try {
+        const client = await modifierClient(id, {
+            ...body,
+            utilisateurId: acces.session.id,
+        });
+        return NextResponse.json(client);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur lors de la modification";
+        const statut = message.toLowerCase().includes("introuvable")
+            ? 404
+            : message.toLowerCase().includes("email")
+            ? 409
+            :400;
+        return NextResponse.json({ error: message }, { status: statut });
+    }
 }
 
 export async function DELETE(
@@ -41,16 +55,16 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     const acces = await exigerRole(request, ["ADMIN"]);
-        if ("erreur" in acces) return acces.erreur;
+    if ("erreur" in acces) return acces.erreur;
+
     const { id } = await params;
 
     try {
-        await supprimerClient(id);
+        await supprimerClient(id, acces.session.id);
         return NextResponse.json({ success: true });
     } catch (error) {
-        return NextResponse.json(
-            { error: "Suppression impossible : ce client a des ventes liées" },
-            { status: 409 }
-        );
+        const message = error instanceof Error ? error.message : "Suppression impossible";
+        const statut = message.toLowerCase().includes("introuvable") ? 404 : 409;
+        return NextResponse.json({ error: message }, { status: statut });
     }
 }
