@@ -148,9 +148,11 @@ export async function creerVente(data: {
 }
 
 export async function annulerVente(id: string, utilisateurId: string) {
-    // ⚠️ INCHANGÉ — ne restitue toujours pas le stock (Lot/MouvementStock).
-    // Décision reportée : annulation = trace comptable seulement, ou
-    // restitution réelle ? À trancher avant la fin du module Ventes.
+    // Décision actée : annulation = trace comptable seulement.
+    // Le stock (Lot/MouvementStock) n'est jamais restitué ici — une vente
+    // annulée ne représente pas nécessairement un retour physique de
+    // marchandise. Un retour réel doit passer par le module Retour, qui
+    // gère la restitution du stock correctement.
     return prisma.$transaction(async (tx) => {
         const vente = await tx.vente.update({
             where: { id },
