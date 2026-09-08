@@ -17,7 +17,6 @@ interface ProductFormModalProps {
         prixAchat: string;
         prixVente: string;
         seuilMinimum: number;
-        quantiteStock: number;
         imageUrl: string | null;
     }) => Promise<void>;
 }
@@ -29,10 +28,6 @@ export default function ProductFormModal({
     categories,
     onSubmit,
 }: ProductFormModalProps) {
-    // Initialisation directe depuis `produit` — pas d'effect.
-    // Le parent doit passer une `key` (ex: key={produit?.id ?? "nouveau"})
-    // pour que React remonte ce composant à chaque changement de produit
-    // et réinitialise donc ce state automatiquement.
     const [nom, setNom] = useState(produit?.nom ?? "");
     const [sku, setSku] = useState(produit?.sku ?? "");
     const [description, setDescription] = useState(produit?.description ?? "");
@@ -40,7 +35,6 @@ export default function ProductFormModal({
     const [prixAchat, setPrixAchat] = useState(produit?.prixAchat?.toString() ?? "");
     const [prixVente, setPrixVente] = useState(produit?.prixVente?.toString() ?? "");
     const [seuilMinimum, setSeuilMinimum] = useState<number>(produit?.seuilMinimum ?? 0);
-    const [quantiteStock, setQuantiteStock] = useState<number>(produit?.quantiteStock ?? 0);
     const [imageUrl, setImageUrl] = useState<string | null>(produit?.imageUrl ?? null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -59,7 +53,6 @@ export default function ProductFormModal({
                 prixAchat,
                 prixVente,
                 seuilMinimum,
-                quantiteStock,
                 imageUrl,
             });
             onClose();
@@ -112,7 +105,6 @@ export default function ProductFormModal({
                                 onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
-                                        // Simulation d'aperçu local (la logique d'upload réelle sera branchée ailleurs)
                                         const objectUrl = URL.createObjectURL(file);
                                         setImageUrl(objectUrl);
                                     }
@@ -258,28 +250,6 @@ export default function ProductFormModal({
                                         €
                                     </span>
                                 </div>
-                            </div>
-
-                            {/* Quantité en stock */}
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="stock" className="text-sm font-medium text-foreground">
-                                    Quantité en stock
-                                </label>
-                                <input
-                                    id="stock"
-                                    type="number"
-                                    min="0"
-                                    value={quantiteStock}
-                                    onChange={(e) => setQuantiteStock(Number(e.target.value))}
-                                    disabled={produit !== null}
-                                    className={`rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50 disabled:cursor-not-allowed ${produit !== null ? "bg-muted" : ""
-                                        }`}
-                                />
-                                {produit !== null && (
-                                    <span className="text-xs text-muted-foreground">
-                                        Modifiable via les mouvements de stock
-                                    </span>
-                                )}
                             </div>
 
                             {/* Description */}
