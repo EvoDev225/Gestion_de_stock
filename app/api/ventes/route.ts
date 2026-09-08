@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exigerRole } from "@/lib/auth";
 import { listerVentes, creerVente } from "@/lib/services/vente.service";
+import { serialiserVente, serialiserVentes } from "@/lib/serializers/vente.serializer";
 
 export async function GET(request: NextRequest) {
     const resultatAuth = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
@@ -9,8 +10,9 @@ export async function GET(request: NextRequest) {
     }
 
     const ventes = await listerVentes();
-    return NextResponse.json(ventes);
+    return NextResponse.json(serialiserVentes(ventes));
 }
+
 
 export async function POST(request: NextRequest) {
     const resultatAuth = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
@@ -28,12 +30,12 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const vente = await creerVente({
-            ...body,
-            utilisateurId: resultatAuth.session.id,
-        });
-        return NextResponse.json(vente, { status: 201 });
-    } catch (error) {
-        return NextResponse.json({ error: (error as Error).message }, { status: 400 });
-    }
+    const vente = await creerVente({
+        ...body,
+        utilisateurId: resultatAuth.session.id,
+    });
+    return NextResponse.json(serialiserVente(vente), { status: 201 });
+} catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+}
 }
