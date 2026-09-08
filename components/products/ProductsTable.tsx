@@ -9,14 +9,14 @@ import {
     ArchiveRestore,
     PackageX,
 } from "lucide-react";
-import type { Produit } from "@/types/produit";
+import type { ProduitAvecStock } from "@/types/produit";
 import Image from "next/image";
 
 interface ProductsTableProps {
-    produits: Produit[];
-    onEdit: (produit: Produit) => void;
-    onManageVariants: (produit: Produit) => void;
-    onArchiveToggle: (produit: Produit) => void;
+    produits: ProduitAvecStock[];
+    onEdit: (produit: ProduitAvecStock) => void;
+    onManageVariants: (produit: ProduitAvecStock) => void;
+    onArchiveToggle: (produit: ProduitAvecStock) => void;
 }
 
 export default function ProductsTable({
@@ -99,20 +99,20 @@ export default function ProductsTable({
                                     {produit.prixVente} €
                                 </td>
 
-                                {/* Stock */}
+                                {/* Stock — calculé via Σ lots, plus jamais produit.quantiteStock */}
                                 <td className="py-3 px-6">
-                                    {produit.quantiteStock === 0 ? (
+                                    {produit.stockCalcule === 0 ? (
                                         <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
                                             Rupture
                                         </span>
-                                    ) : produit.quantiteStock <= produit.seuilMinimum ? (
+                                    ) : produit.stockCalcule <= produit.seuilMinimum ? (
                                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
                                             <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                                            {produit.quantiteStock}
+                                            {produit.stockCalcule}
                                         </span>
                                     ) : (
                                         <span className="text-sm text-muted-foreground">
-                                            {produit.quantiteStock}
+                                            {produit.stockCalcule}
                                         </span>
                                     )}
                                 </td>

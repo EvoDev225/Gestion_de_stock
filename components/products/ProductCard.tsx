@@ -27,7 +27,6 @@ export default function ProductCard({
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Fermer le menu au clic extérieur
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -40,9 +39,7 @@ export default function ProductCard({
 
     return (
         <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
-            {/* ── Ligne du haut : Image, Infos, Menu ── */}
             <div className="flex gap-3 items-start">
-                {/* Image */}
                 <div className="w-12 h-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted flex items-center justify-center">
                     {produit.imageUrl ? (
                         <img
@@ -55,7 +52,6 @@ export default function ProductCard({
                     )}
                 </div>
 
-                {/* Bloc texte */}
                 <div className="flex-1 min-w-0 flex flex-col gap-1.5">
                     <span className="font-semibold text-sm text-foreground truncate">
                         {produit.nom}
@@ -68,7 +64,6 @@ export default function ProductCard({
                     </span>
                 </div>
 
-                {/* Menu actions */}
                 <div className="relative shrink-0" ref={menuRef}>
                     <button
                         type="button"
@@ -120,30 +115,28 @@ export default function ProductCard({
                 </div>
             </div>
 
-            {/* ── Ligne du bas : Prix, Stock, Statut ── */}
             <div className="flex items-center justify-between pt-2 border-t border-border">
                 <span className="font-semibold text-primary">
                     {produit.prixVente} €
                 </span>
 
                 <div className="flex items-center gap-2">
-                    {/* Badge Stock */}
-                    {produit.quantiteStock === 0 ? (
+                    {/* Badge Stock — calculé via Σ lots */}
+                    {produit.stockCalcule === 0 ? (
                         <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
                             Rupture
                         </span>
-                    ) : produit.quantiteStock <= produit.seuilMinimum ? (
+                    ) : produit.stockCalcule <= produit.seuilMinimum ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
                             <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                            {produit.quantiteStock}
+                            {produit.stockCalcule}
                         </span>
                     ) : (
                         <span className="text-sm text-muted-foreground">
-                            {produit.quantiteStock}
+                            {produit.stockCalcule}
                         </span>
                     )}
 
-                    {/* Badge Statut */}
                     <span
                         className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${!produit.archive
                                 ? "bg-primary/10 text-primary"
