@@ -13,7 +13,7 @@ export interface Produit {
     prixAchat: string; // Decimal Prisma sérialisé en string via JSON
     prixVente: string;
     seuilMinimum: number;
-    quantiteStock: number;
+    stockCalcule: number; // Σ des lots, calculé côté API — jamais un champ direct en base
     archive: boolean;
     dateCreation: string;
     categorieId?: string | null;
