@@ -59,8 +59,8 @@ const navSections: NavSection[] = [
         title: "Achats",
         items: [
             { label: "Fournisseurs", href: "/dashboard/fournisseurs", icon: Truck },
-            { label: "Commandes fournisseurs", href: "/dashboard/purchase-orders", icon: ShoppingCart },
-            { label: "Réceptions", href: "/dashboard/receptions", icon: PackageCheck },
+            { label: "Commandes fournisseurs", href: "/dashboard/commandes-fournisseur", icon: ShoppingCart },
+            { label: "Réceptions", href: "/dashboard/receptions-fournisseur", icon: PackageCheck },
         ],
     },
     {
