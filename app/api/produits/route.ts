@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listerProduits, creerProduit } from "@/lib/services/produit.service";
+import { listerProduitsAvecStock, creerProduit } from "@/lib/services/produit.service";
 import { exigerRole } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
   const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
   if ("erreur" in acces) return acces.erreur;
 
-  const produits = await listerProduits();
+  const produits = await listerProduitsAvecStock();
   return NextResponse.json(produits);
 }
 
