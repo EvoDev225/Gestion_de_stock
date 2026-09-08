@@ -164,7 +164,7 @@ export default function VariantsPanel({
                                                     SKU: {variante.skuVariante}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground mt-1">
-                                                    Stock: {(variante as any).stockCalcule ?? 0} (calculé depuis les lots)
+                                                    Stock: {variante.stockCalcule ?? 0} (calculé depuis les lots)
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-1 shrink-0">
