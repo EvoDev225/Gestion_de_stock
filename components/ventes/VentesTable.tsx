@@ -6,11 +6,13 @@ import type { Vente } from "@/types/vente";
 interface VentesTableProps {
     ventes: Vente[];
     onRequestCancel: (vente: Vente) => void;
+    onRowClick: (vente: Vente) => void;
 }
 
 export default function VentesTable({
     ventes,
     onRequestCancel,
+    onRowClick,
 }: VentesTableProps) {
     return (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -40,7 +42,8 @@ export default function VentesTable({
                         ventes.map((vente) => (
                             <tr
                                 key={vente.id}
-                                className="border-b border-border transition-colors hover:bg-muted/30"
+                                onClick={() => onRowClick(vente)}
+                                className="border-b border-border transition-colors hover:bg-muted/30 cursor-pointer"
                             >
                                 {/* Date */}
                                 <td className="py-3 px-6 text-sm text-foreground">
@@ -66,7 +69,6 @@ export default function VentesTable({
                                 </td>
 
                                 {/* Montant */}
-                                {/* Montant */}
                                 <td className="py-3 px-6 text-sm font-semibold text-primary">
                                     {new Intl.NumberFormat('fr-FR', {
                                         style: 'currency',
@@ -77,10 +79,11 @@ export default function VentesTable({
                                 {/* Statut */}
                                 <td className="py-3 px-6">
                                     <span
-                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${vente.statut === "VALIDEE"
+                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                                            vente.statut === "VALIDEE"
                                                 ? "bg-primary/10 text-primary"
                                                 : "bg-muted/50 text-muted-foreground"
-                                            }`}
+                                        }`}
                                     >
                                         {vente.statut === "VALIDEE" ? "Validée" : "Annulée"}
                                     </span>
@@ -89,10 +92,11 @@ export default function VentesTable({
                                 {/* Mode de paiement */}
                                 <td className="py-3 px-6">
                                     <span
-                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${vente.modePaiement === "TOTAL"
+                                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                                            vente.modePaiement === "TOTAL"
                                                 ? "bg-accent-subtle text-accent-hover"
                                                 : "bg-warning/10 text-warning"
-                                            }`}
+                                        }`}
                                     >
                                         {vente.modePaiement === "TOTAL" ? "Total" : "Crédit"}
                                     </span>
@@ -104,7 +108,10 @@ export default function VentesTable({
                                         {vente.statut === "VALIDEE" ? (
                                             <button
                                                 type="button"
-                                                onClick={() => onRequestCancel(vente)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onRequestCancel(vente);
+                                                }}
                                                 title="Annuler la vente"
                                                 className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
                                             >
