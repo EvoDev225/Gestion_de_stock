@@ -133,6 +133,7 @@ model Lot {
   varianteId      String?
   mouvementStocks MouvementStock[]
   ligneVentes     LigneVente[]
+  lignesRetour    LigneRetour[]
   produit  Produit?  @relation(fields: [produitId], references: [id], onDelete: Cascade)
   variante Variante? @relation(fields: [varianteId], references: [id], onDelete: Cascade)
 }
@@ -265,9 +266,11 @@ model LigneRetour {
   retourId   String
   produitId  String
   varianteId String?
+  lotId      String?
   retour     Retour    @relation(fields: [retourId], references: [id], onDelete: Cascade)
   produit    Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
   variante   Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  lot        Lot?      @relation(fields: [lotId], references: [id], onDelete: Restrict)
 }
 
 model Inventaire {
