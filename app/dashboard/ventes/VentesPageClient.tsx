@@ -8,6 +8,7 @@ import VentesTable from "@/components/ventes/VentesTable"
 import VentesPagination from "@/components/ventes/VentesPagination"
 import ConfirmDialog from "@/components/ui/ConfirmDialog"
 import NouvelleVenteModal from "@/components/ventes/NouvelleVenteModal"
+import VenteDetailModal from "@/components/ventes/VenteDetailModal"
 
 const ITEMS_PER_PAGE = 10
 
@@ -21,6 +22,7 @@ export default function VentesPageClient() {
     const [isNouvelleVenteModalOpen, setIsNouvelleVenteModalOpen] = useState<boolean>(false)
     const [venteACanceling, setVenteACanceling] = useState<Vente | null>(null)
     const [isConfirmingCancel, setIsConfirmingCancel] = useState<boolean>(false)
+    const [venteEnDetail, setVenteEnDetail] = useState<Vente | null>(null)
 
     const fetchVentes = useCallback(async () => {
         try {
@@ -124,6 +126,14 @@ export default function VentesPageClient() {
         }
     }
 
+    const handleRowClick = (vente: Vente) => {
+        setVenteEnDetail(vente)
+    }
+
+    const handleCloseDetail = () => {
+        setVenteEnDetail(null)
+    }
+
     return (
         <div className="space-y-6 bg-background text-foreground min-h-screen p-6">
             <VentesPageHeader onCreateClick={handleOpenCreateModal} />
@@ -146,6 +156,7 @@ export default function VentesPageClient() {
                     <VentesTable
                         ventes={paginatedVentes}
                         onRequestCancel={handleRequestCancel}
+                        onRowClick={handleRowClick}
                     />
                     <VentesPagination
                         currentPage={currentPage}
@@ -177,6 +188,12 @@ export default function VentesPageClient() {
                 isOpen={isNouvelleVenteModalOpen}
                 onClose={handleCloseCreateModal}
                 onVenteCreated={handleVenteCreated}
+            />
+
+            <VenteDetailModal
+                isOpen={venteEnDetail !== null}
+                vente={venteEnDetail}
+                onClose={handleCloseDetail}
             />
         </div>
     )
