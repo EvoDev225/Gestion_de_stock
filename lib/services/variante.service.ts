@@ -1,11 +1,28 @@
 import { prisma } from "@/lib/prisma";
 
 export async function listerVariantes(produitId?: string) {
-    return prisma.variante.findMany({
+    const variantes = await prisma.variante.findMany({
         where: produitId ? { produitId } : undefined,
         include: { produit: true },
         orderBy: { nomVariante: "asc" },
     });
+
+    if (variantes.length === 0) return variantes;
+
+    const sommeParVariante = await prisma.lot.groupBy({
+        by: ["varianteId"],
+        _sum: { quantite: true },
+        where: { varianteId: { in: variantes.map((v) => v.id) } },
+    });
+
+    const stockParVarianteId = new Map(
+        sommeParVariante.map((s) => [s.varianteId as string, s._sum.quantite ?? 0])
+    );
+
+    return variantes.map((v) => ({
+        ...v,
+        stockCalcule: stockParVarianteId.get(v.id) ?? 0,
+    }));
 }
 
 export async function obtenirVarianteParId(id: string) {
