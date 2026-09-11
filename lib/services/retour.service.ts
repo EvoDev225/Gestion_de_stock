@@ -58,6 +58,7 @@ export async function creerRetour(data: {
             produitId: string;
             varianteId: string | null;
             lotId: string;
+            ligneVenteId: string | null;
             quantite: number;
         }[] = [];
 
@@ -97,9 +98,17 @@ export async function creerRetour(data: {
                 if (ligne.quantite <= 0) {
                     throw new Error("La quantité retournée doit être supérieure à 0");
                 }
-                if (ligne.quantite > ligneVente.quantite) {
+
+                const dejaRetourne = await tx.ligneRetour.aggregate({
+                    where: { ligneVenteId: ligne.ligneVenteId },
+                    _sum: { quantite: true },
+                });
+                const quantiteDejaRetournee = dejaRetourne._sum.quantite ?? 0;
+                const quantiteRestante = ligneVente.quantite - quantiteDejaRetournee;
+
+                if (ligne.quantite > quantiteRestante) {
                     throw new Error(
-                        `Quantité retournée (${ligne.quantite}) supérieure à la quantité vendue sur cette ligne (${ligneVente.quantite})`
+                        `Quantité retournée (${ligne.quantite}) supérieure à la quantité restante à retourner sur cette ligne (${quantiteRestante} restant, ${quantiteDejaRetournee} déjà retourné sur ${ligneVente.quantite} vendu)`
                     );
                 }
 
@@ -107,6 +116,7 @@ export async function creerRetour(data: {
                     produitId: ligneVente.produitId,
                     varianteId: ligneVente.varianteId,
                     lotId: ligneVente.lotId,
+                    ligneVenteId: ligneVente.id,   // <-- cette ligne doit être présente
                     quantite: ligne.quantite,
                 });
             }
@@ -147,6 +157,7 @@ export async function creerRetour(data: {
                     produitId: produitId as string,
                     varianteId: lot.varianteId,
                     lotId: lot.id,
+                    ligneVenteId: null,
                     quantite: ligne.quantite,
                 });
             }
@@ -165,6 +176,7 @@ export async function creerRetour(data: {
                         produitId: ligne.produitId,
                         varianteId: ligne.varianteId,
                         lotId: ligne.lotId,
+                        ligneVenteId: ligne.ligneVenteId,
                         quantite: ligne.quantite,
                     })),
                 },

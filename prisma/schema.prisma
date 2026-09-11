@@ -196,6 +196,7 @@ model LigneVente {
   produitId                String
   varianteId               String?
   lotId                    String?
+  lignesRetour LigneRetour[]
   vente                    Vente     @relation(fields: [venteId], references: [id], onDelete: Cascade)
   produit                  Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
   variante                 Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
@@ -261,16 +262,18 @@ model Retour {
 }
 
 model LigneRetour {
-  id         String    @id @default(uuid())
-  quantite   Int
-  retourId   String
-  produitId  String
-  varianteId String?
-  lotId      String?
-  retour     Retour    @relation(fields: [retourId], references: [id], onDelete: Cascade)
-  produit    Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
-  variante   Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
-  lot        Lot?      @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  id           String      @id @default(uuid())
+  quantite     Int
+  retourId     String
+  produitId    String
+  varianteId   String?
+  lotId        String?
+  ligneVenteId String?
+  retour       Retour      @relation(fields: [retourId], references: [id], onDelete: Cascade)
+  produit      Produit     @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante     Variante?   @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  lot          Lot?        @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  ligneVente   LigneVente? @relation(fields: [ligneVenteId], references: [id], onDelete: Restrict)
 }
 
 model Inventaire {
