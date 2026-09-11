@@ -2,9 +2,16 @@
 
 type TypeFiltre = "TOUS" | "CLIENT" | "FOURNISSEUR";
 
+type Compteurs = {
+    tous: number;
+    client: number;
+    fournisseur: number;
+};
+
 interface RetoursToolbarProps {
     filtreType: TypeFiltre;
     onFiltreTypeChange: (filtre: TypeFiltre) => void;
+    compteurs: Compteurs;
 }
 
 const OPTIONS: { valeur: TypeFiltre; label: string }[] = [
@@ -13,7 +20,17 @@ const OPTIONS: { valeur: TypeFiltre; label: string }[] = [
     { valeur: "FOURNISSEUR", label: "Fournisseur" },
 ];
 
-export default function RetoursToolbar({ filtreType, onFiltreTypeChange }: RetoursToolbarProps) {
+const CLES_COMPTEURS: Record<TypeFiltre, keyof Compteurs> = {
+    TOUS: "tous",
+    CLIENT: "client",
+    FOURNISSEUR: "fournisseur",
+};
+
+export default function RetoursToolbar({
+    filtreType,
+    onFiltreTypeChange,
+    compteurs,
+}: RetoursToolbarProps) {
     return (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
             {OPTIONS.map((option) => (
@@ -27,7 +44,7 @@ export default function RetoursToolbar({ filtreType, onFiltreTypeChange }: Retou
                             : "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted"
                     }
                 >
-                    {option.label}
+                    {option.label} ({compteurs[CLES_COMPTEURS[option.valeur]]})
                 </button>
             ))}
         </div>
