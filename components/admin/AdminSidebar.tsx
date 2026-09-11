@@ -68,7 +68,7 @@ const navSections: NavSection[] = [
         items: [
             { label: "Clients", href: "/dashboard/clients", icon: Users },
             { label: "Ventes", href: "/dashboard/ventes", icon: Receipt },
-            { label: "Retours", href: "/dashboard/returns", icon: Undo2 },
+            { label: "Retours", href: "/dashboard/retours", icon: Undo2 },
         ],
     },
     {
