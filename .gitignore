@@ -46,3 +46,7 @@ next-env.d.ts
 /generated/prisma
 
 .continue/
+
+# Images uploadées (contenu local, jamais versionné)
+public/uploads/produits/*
+!public/uploads/produits/.gitkeep
