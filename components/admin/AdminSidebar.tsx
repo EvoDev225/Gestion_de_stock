@@ -76,7 +76,7 @@ const navSections: NavSection[] = [
         items: [
             { label: "Journal d'activité", href: "/dashboard/journal", icon: History },
             { label: "Rapports & Exports", href: "/dashboard/rapports", icon: BarChart3 },
-            { label: "Utilisateurs", href: "/dashboard/users", icon: UserCog },
+            { label: "Utilisateurs", href: "/dashboard/utilisateurs", icon: UserCog },
             { label: "Paramètres", href: "/dashboard/settings", icon: Settings },
         ],
     },
