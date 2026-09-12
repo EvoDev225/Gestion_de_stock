@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, UploadCloud } from "lucide-react";
+import { X, UploadCloud, Loader2 } from "lucide-react";
 import type { Produit, Categorie } from "@/types/produit";
+import { toast } from "sonner";
+import Image from "next/image";
 
 interface ProductFormModalProps {
     isOpen: boolean;
@@ -37,6 +39,10 @@ export default function ProductFormModal({
     const [seuilMinimum, setSeuilMinimum] = useState<number>(produit?.seuilMinimum ?? 0);
     const [imageUrl, setImageUrl] = useState<string | null>(produit?.imageUrl ?? null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Nouveaux états pour la gestion de l'upload d'image
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [apercuLocal, setApercuLocal] = useState<string | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -102,27 +108,63 @@ export default function ProductFormModal({
                                 ref={fileInputRef}
                                 className="hidden"
                                 accept="image/*"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) {
-                                        const objectUrl = URL.createObjectURL(file);
-                                        setImageUrl(objectUrl);
+                                    if (!file) return;
+
+                                    // Aperçu local immédiat pendant l'upload (jamais envoyé au serveur, jamais stocké dans imageUrl)
+                                    const objectUrl = URL.createObjectURL(file);
+                                    setApercuLocal(objectUrl);
+                                    setIsUploadingImage(true);
+
+                                    try {
+                                        const formData = new FormData();
+                                        formData.append("file", file);
+
+                                        const res = await fetch("/api/upload/produits", {
+                                            method: "POST",
+                                            body: formData,
+                                        });
+
+                                        if (!res.ok) {
+                                            const errorBody = await res.json().catch(() => ({}));
+                                            throw new Error(errorBody.error ?? "Erreur lors de l'upload de l'image");
+                                        }
+
+                                        const data: { url: string } = await res.json();
+                                        setImageUrl(data.url);
+                                        toast.success("Image téléchargée avec succès.");
+                                    } catch (error) {
+                                        console.error("Erreur lors de l'upload de l'image :", error);
+                                        toast.error(error instanceof Error ? error.message : "Erreur lors de l'upload de l'image.");
+                                        setApercuLocal(null);
+                                        if (fileInputRef.current) fileInputRef.current.value = "";
+                                    } finally {
+                                        setIsUploadingImage(false);
                                     }
                                 }}
                             />
-                            {imageUrl ? (
-                                <div className="relative w-full max-w-xs">
-                                    <img
-                                        src={imageUrl}
+                            {isUploadingImage ? (
+                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                    <Loader2 className="h-10 w-10 mb-2 animate-spin" aria-hidden="true" />
+                                    <span className="text-sm font-medium">Téléchargement en cours...</span>
+                                </div>
+                            ) : apercuLocal ?? imageUrl ? (
+                                <div className="relative w-full max-w-xs h-48"> {/* ← h-48 déplacé ici pour le fill */}
+                                    <Image
+                                        src={apercuLocal ?? imageUrl ?? ""}
                                         alt="Aperçu du produit"
-                                        className="w-full h-48 object-cover rounded-lg border border-border"
+                                        fill
+                                        unoptimized
+                                        className="object-cover rounded-lg border border-border"
                                     />
                                     <button
                                         type="button"
-                                        className="absolute top-2 right-2 p-1.5 bg-card rounded-full border border-border text-muted-foreground hover:text-destructive transition-colors"
+                                        className="absolute top-2 right-2 p-1.5 bg-card rounded-full border border-border text-muted-foreground hover:text-destructive transition-colors z-10"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setImageUrl(null);
+                                            setApercuLocal(null);
                                             if (fileInputRef.current) fileInputRef.current.value = "";
                                         }}
                                         aria-label="Supprimer l'image"
@@ -281,7 +323,7 @@ export default function ProductFormModal({
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isUploadingImage}
                         className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
                         {isSubmitting ? "Enregistrement..." : "Enregistrer"}
