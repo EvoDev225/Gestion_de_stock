@@ -97,7 +97,9 @@ export async function obtenirExportProduitsDetail(): Promise<StructureExport> {
 
     const lignesLots = lots.map((l) => ({
         numeroLot: l.numeroLot,
-        dateExpiration: l.dateExpiration.toISOString().split('T')[0],
+        dateExpiration: l.dateExpiration
+            ? l.dateExpiration.toISOString().split('T')[0]
+            : 'N/A',
         quantite: l.quantite,
         dateReception: l.dateReception.toISOString().split('T')[0],
         associeA: l.produit?.nom || l.variante?.nomVariante || 'N/A',
