@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { toast } from "sonner";
 import ProductsPageHeader from "@/components/products/ProductsPageHeader";
+import ProductsKpiCards from "@/components/products/ProductsKpiCards";
 import LowStockBanner from "@/components/products/LowStockBanner";
 import ProductsToolbar from "@/components/products/ProductsToolbar";
 import ProductsTable from "@/components/products/ProductsTable";
@@ -44,6 +46,7 @@ export default function ProductsPageClient() {
             setProduits(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les produits.");
         } finally {
             setIsLoading(false);
         }
@@ -57,6 +60,7 @@ export default function ProductsPageClient() {
             setCategories(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les catégories.");
         }
     }, []);
 
@@ -64,6 +68,16 @@ export default function ProductsPageClient() {
         fetchProduits();
         fetchCategories();
     }, [fetchProduits, fetchCategories]);
+
+    // ── KPIs ──
+    const kpis = useMemo(() => {
+        const total = produits.length;
+        const archives = produits.filter((p) => p.archive === true).length;
+        const actifs = total - archives;
+        const enRupture = produits.filter((p) => !p.archive && p.stockCalcule === 0).length;
+
+        return { total, actifs, archives, enRupture };
+    }, [produits]);
 
     // ── Filtrage + pagination côté client ──
     const produitsFiltres = useMemo(() => {
@@ -138,38 +152,41 @@ export default function ProductsPageClient() {
 
         if (!res.ok) {
             const errorBody = await res.json().catch(() => ({}));
+            toast.error(errorBody.error ?? "Erreur lors de l'enregistrement du produit");
             throw new Error(errorBody.error ?? "Erreur lors de l'enregistrement du produit");
         }
 
         await fetchProduits();
+        toast.success(isEdition ? "Produit modifié avec succès." : "Produit créé avec succès.");
     };
 
     const handleArchiveToggle = async (produit: Produit) => {
-    try {
-        const url = produit.archive
-            ? `/api/produits/${produit.id}/desarchiver`
-            : `/api/produits/${produit.id}`;
-        const method = produit.archive ? "PATCH" : "DELETE";
+        try {
+            const url = produit.archive
+                ? `/api/produits/${produit.id}/desarchiver`
+                : `/api/produits/${produit.id}`;
+            const method = produit.archive ? "PATCH" : "DELETE";
 
-        const res = await fetch(url, { method });
+            const res = await fetch(url, { method });
 
-        if (!res.ok) {
-            const errorBody = await res.json().catch(() => ({}));
-            throw new Error(errorBody.error ?? `Erreur ${res.status} lors du changement de statut`);
+            if (!res.ok) {
+                const errorBody = await res.json().catch(() => ({}));
+                throw new Error(errorBody.error ?? `Erreur ${res.status} lors du changement de statut`);
+            }
+
+            await fetchProduits();
+            toast.success(produit.archive ? "Produit désarchivé avec succès." : "Produit archivé avec succès.");
+        } catch (error) {
+            console.error(error);
+            toast.error(error instanceof Error ? error.message : "Erreur lors du changement de statut.");
         }
-
-        await fetchProduits();
-    } catch (error) {
-        console.error(error);
-    }
-};
+    };
 
     // ── Actions variantes ──
     const handleOpenVariantsPanel = async (produit: Produit) => {
         setProduitPourVariantes(produit);
         setIsVariantsPanelOpen(true);
         try {
-    
             const res = await fetch(`/api/variantes?produitId=${produit.id}`);
             if (!res.ok) throw new Error("Erreur lors du chargement des variantes");
             const data: Variante[] = await res.json();
@@ -188,37 +205,62 @@ export default function ProductsPageClient() {
 
     const handleAddVariant = async (data: { nomVariante: string; skuVariante: string }) => {
         if (!produitPourVariantes) return;
-        const res = await fetch("/api/variantes", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...data, produitId: produitPourVariantes.id }),
-        });
-        if (!res.ok) throw new Error("Erreur lors de l'ajout de la variante");
-        await handleOpenVariantsPanel(produitPourVariantes); // recharge la liste
+        try {
+            const res = await fetch("/api/variantes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...data, produitId: produitPourVariantes.id }),
+            });
+            if (!res.ok) throw new Error("Erreur lors de l'ajout de la variante");
+            await handleOpenVariantsPanel(produitPourVariantes); // recharge la liste
+            toast.success("Variante ajoutée avec succès.");
+        } catch (error) {
+            toast.error("Erreur lors de l'ajout de la variante.");
+            throw error;
+        }
     };
 
     const handleEditVariant = async (
         varianteId: string,
         data: { nomVariante: string; skuVariante: string }
     ) => {
-        const res = await fetch(`/api/variantes/${varianteId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Erreur lors de la modification de la variante");
-        if (produitPourVariantes) await handleOpenVariantsPanel(produitPourVariantes);
+        try {
+            const res = await fetch(`/api/variantes/${varianteId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            });
+            if (!res.ok) throw new Error("Erreur lors de la modification de la variante");
+            if (produitPourVariantes) await handleOpenVariantsPanel(produitPourVariantes);
+            toast.success("Variante modifiée avec succès.");
+        } catch (error) {
+            toast.error("Erreur lors de la modification de la variante.");
+            throw error;
+        }
     };
 
     const handleDeleteVariant = async (varianteId: string) => {
-        const res = await fetch(`/api/variantes/${varianteId}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Erreur lors de la suppression de la variante");
-        if (produitPourVariantes) await handleOpenVariantsPanel(produitPourVariantes);
+        try {
+            const res = await fetch(`/api/variantes/${varianteId}`, { method: "DELETE" });
+            if (!res.ok) throw new Error("Erreur lors de la suppression de la variante");
+            if (produitPourVariantes) await handleOpenVariantsPanel(produitPourVariantes);
+            toast.success("Variante supprimée avec succès.");
+        } catch (error) {
+            toast.error("Erreur lors de la suppression de la variante.");
+            throw error;
+        }
     };
 
     return (
         <div className="flex flex-col gap-6">
             <ProductsPageHeader onCreateClick={handleOpenCreateModal} />
+
+            <ProductsKpiCards
+                total={kpis.total}
+                actifs={kpis.actifs}
+                archives={kpis.archives}
+                enRupture={kpis.enRupture}
+            />
 
             <LowStockBanner
                 count={produitsEnStockBas.length}
@@ -238,47 +280,47 @@ export default function ProductsPageClient() {
             />
 
             {isLoading ? (
-    <div className="text-center py-12 text-muted-foreground text-sm">
-        Chargement des produits...
-    </div>
-) : (
-    <>
-        {view === "table" ? (
-            <ProductsTable
-                produits={produitsPage}
-                onEdit={handleOpenEditModal}
-                onManageVariants={handleOpenVariantsPanel}
-                onArchiveToggle={handleArchiveToggle}
-            />
-        ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {produitsPage.length === 0 ? (
-                    <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
-                        Aucun produit trouvé
-                    </div>
-                ) : (
-                    produitsPage.map((produit) => (
-                        <ProductCard
-                            key={produit.id}
-                            produit={produit}
+                <div className="text-center py-12 text-muted-foreground text-sm">
+                    Chargement des produits...
+                </div>
+            ) : (
+                <>
+                    {view === "table" ? (
+                        <ProductsTable
+                            produits={produitsPage}
                             onEdit={handleOpenEditModal}
                             onManageVariants={handleOpenVariantsPanel}
                             onArchiveToggle={handleArchiveToggle}
                         />
-                    ))
-                )}
-            </div>
-        )}
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {produitsPage.length === 0 ? (
+                                <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
+                                    Aucun produit trouvé
+                                </div>
+                            ) : (
+                                produitsPage.map((produit) => (
+                                    <ProductCard
+                                        key={produit.id}
+                                        produit={produit}
+                                        onEdit={handleOpenEditModal}
+                                        onManageVariants={handleOpenVariantsPanel}
+                                        onArchiveToggle={handleArchiveToggle}
+                                    />
+                                ))
+                            )}
+                        </div>
+                    )}
 
-        <ProductsPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={produitsFiltres.length}
-            itemsPerPage={ITEMS_PER_PAGE}
-            onPageChange={setCurrentPage}
-        />
-    </>
-)}
+                    <ProductsPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={produitsFiltres.length}
+                        itemsPerPage={ITEMS_PER_PAGE}
+                        onPageChange={setCurrentPage}
+                    />
+                </>
+            )}
 
             <ProductFormModal
                 key={produitEnEdition?.id ?? "nouveau-produit"}
