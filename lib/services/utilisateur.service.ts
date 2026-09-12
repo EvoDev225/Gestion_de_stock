@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { enregistrerActivite } from "./journal-activite.service";
+
 export async function listerUtilisateurs() {
     return prisma.utilisateur.findMany({
         select: { id: true, nom: true, email: true, role: true, actif: true, dateCreation: true },
@@ -77,5 +78,53 @@ export async function desactiverUtilisateur(id: string, utilisateurAdminId: stri
         }, tx);
 
         return utilisateur;
+    });
+}
+
+export async function modifierProfil(
+    id: string,
+    data: {
+        nom?: string;
+        email?: string;
+        motDePasseActuel?: string;
+        nouveauMotDePasse?: string;
+    }
+) {
+    const utilisateur = await prisma.utilisateur.findUnique({
+        where: { id },
+        select: { id: true, motDePasse: true },
+    });
+
+    if (!utilisateur) {
+        throw new Error("Utilisateur introuvable");
+    }
+
+    const updateData: { nom?: string; email?: string; motDePasse?: string } = {};
+
+    if (data.nom !== undefined) {
+        updateData.nom = data.nom;
+    }
+
+    if (data.email !== undefined) {
+        updateData.email = data.email;
+    }
+
+    if (data.nouveauMotDePasse !== undefined) {
+        if (!data.motDePasseActuel) {
+            throw new Error("Le mot de passe actuel est requis pour définir un nouveau mot de passe");
+        }
+
+        const motDePasseValide = await bcrypt.compare(data.motDePasseActuel, utilisateur.motDePasse);
+        if (!motDePasseValide) {
+            throw new Error("Mot de passe actuel incorrect");
+        }
+
+        updateData.motDePasse = await bcrypt.hash(data.nouveauMotDePasse, TOURS_DE_HASHAGE);
+    }
+
+    return prisma.utilisateur.update({
+        where: { id },
+        data: updateData,
+        select: { id: true, nom: true, email: true, role: true, actif: true },
     });
 }
