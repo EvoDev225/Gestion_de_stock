@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import type { CommandeFournisseur, NouvelleCommandeData, Produit } from "@/types/commande-fournisseur";
 import type { Fournisseur } from "@/types/fournisseur";
 import CommandesToolbar from "@/components/admin/commandes-fournisseur/CommandesToolbar";
@@ -25,7 +26,6 @@ export default function CommandesPageClient({
   const [filtreStatut, setFiltreStatut] = useState<StatutFiltre>("TOUS");
   const [modalOuvert, setModalOuvert] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [erreurApi, setErreurApi] = useState<string | null>(null);
 
   const commandesFiltrees = useMemo(() => {
     if (filtreStatut === "TOUS") return commandes;
@@ -34,7 +34,6 @@ export default function CommandesPageClient({
 
   const handleCreerCommande = async (data: NouvelleCommandeData) => {
     setIsSubmitting(true);
-    setErreurApi(null);
 
     try {
       const response = await fetch("/api/commandes-fournisseur", {
@@ -51,8 +50,9 @@ export default function CommandesPageClient({
 
       setCommandes((prev) => [result, ...prev]);
       setModalOuvert(false);
-    } catch (error: any) {
-      setErreurApi(error.message || "Erreur lors de la création de la commande.");
+      toast.success("Commande créée avec succès.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erreur lors de la création de la commande.");
     } finally {
       setIsSubmitting(false);
     }
@@ -60,12 +60,6 @@ export default function CommandesPageClient({
 
   return (
     <div className="space-y-6">
-      {erreurApi && (
-        <div className="rounded-md bg-red-50 p-4 border border-red-200">
-          <p className="text-sm font-medium text-red-800">{erreurApi}</p>
-        </div>
-      )}
-
       <CommandesToolbar
         filtreStatut={filtreStatut}
         onFiltreStatutChange={setFiltreStatut}
