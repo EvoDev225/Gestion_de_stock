@@ -31,17 +31,20 @@ export async function PATCH(
     if ("erreur" in acces) return acces.erreur;
     const { id } = await params;
     const body = await request.json();
-    const utilisateur = await modifierUtilisateur(id, body);
-    return NextResponse.json(utilisateur);
-}
 
-export async function DELETE(
-    request: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    const acces = await exigerRole(request, ["ADMIN"]);
-    if ("erreur" in acces) return acces.erreur;
-    const { id } = await params;
-    const utilisateur = await desactiverUtilisateur(id, acces.session.id);
+    const CHAMPS_AUTORISES = ["nom", "email", "role"] as const;
+    const data: { nom?: string; email?: string; role?: "ADMIN" | "EMPLOYEE" } = {};
+
+    for (const champ of CHAMPS_AUTORISES) {
+        if (body[champ] !== undefined) {
+            data[champ] = body[champ];
+        }
+    }
+
+    if (data.role && !["ADMIN", "EMPLOYEE"].includes(data.role)) {
+        return NextResponse.json({ error: "Rôle invalide" }, { status: 400 });
+    }
+
+    const utilisateur = await modifierUtilisateur(id, data);
     return NextResponse.json(utilisateur);
 }
