@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { toast } from "sonner";
 import type { Client } from '@/types/client';
 
 interface ClientFormModalProps {
@@ -89,6 +90,7 @@ export function ClientFormModal({
             }
 
             onSuccess(result);
+            toast.success(clientAModifier ? "Client modifié avec succès." : "Client créé avec succès.");
             onClose();
         } catch (error) {
             setApiError(error instanceof Error ? error.message : 'Erreur inconnue');
