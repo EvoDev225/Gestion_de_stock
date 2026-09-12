@@ -4,6 +4,7 @@ import { obtenirSessionServeur } from "@/lib/auth";
 import { SidebarProvider } from "@/components/contexts/SidebarContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
+import { Toaster } from "sonner";
 
 export default async function DashboardLayout({
     children,
@@ -29,6 +30,7 @@ export default async function DashboardLayout({
                     {children}
                 </main>
             </div>
+            <Toaster richColors position="top-right" />
         </SidebarProvider>
     );
 }
