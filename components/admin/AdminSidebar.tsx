@@ -67,7 +67,7 @@ const navSections: NavSection[] = [
         title: "Ventes",
         items: [
             { label: "Clients", href: "/dashboard/clients", icon: Users },
-            { label: "Ventes", href: "/dashboard/ventes", icon: Receipt },
+            { label: "Ventes",  href: "/dashboard/ventes", icon: Receipt },
             { label: "Retours", href: "/dashboard/retours", icon: Undo2 },
         ],
     },
@@ -75,7 +75,7 @@ const navSections: NavSection[] = [
         title: "Système",
         items: [
             { label: "Journal d'activité", href: "/dashboard/journal", icon: History },
-            { label: "Rapports & Exports", href: "/dashboard/reports", icon: BarChart3 },
+            { label: "Rapports & Exports", href: "/dashboard/rapports", icon: BarChart3 },
             { label: "Utilisateurs", href: "/dashboard/users", icon: UserCog },
             { label: "Paramètres", href: "/dashboard/settings", icon: Settings },
         ],
