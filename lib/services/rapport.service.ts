@@ -43,6 +43,21 @@ export async function obtenirDernierRapport() {
 }
 
 /**
+ * Liste les rapports générés, du plus récent au plus ancien.
+ */
+export async function listerRapports(limit: number = 20) {
+    return prisma.rapportActivite.findMany({
+        orderBy: { dateGeneration: 'desc' },
+        take: limit,
+        include: {
+            utilisateur: {
+                select: { id: true, nom: true, email: true },
+            },
+        },
+    });
+}
+
+/**
  * 2. Détermine la période couverte par le prochain rapport
  */
 export async function determinerPeriode(): Promise<PeriodeRapport> {
