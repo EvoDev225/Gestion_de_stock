@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, Mail, MapPin, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { ClientFormModal } from "@/components/admin/clients/ClientFormModal";
 import type { ClientAvecVentes, Client } from "@/types/client";
 import { ClientVentesHistorique } from "@/components/admin/clients/ClientVentesHistorique";
@@ -45,6 +46,7 @@ export default function ClientDetailPageClient({
                 return;
             }
 
+            toast.success(`${client.nom} a été supprimé avec succès.`);
             router.push("/dashboard/clients");
         } catch (error) {
             setErreurSuppression("Erreur réseau, veuillez réessayer");
@@ -128,14 +130,14 @@ export default function ClientDetailPageClient({
             />
 
             <ConfirmDialog
-                isOpen={isConfirmOpen}
-                onClose={() => setIsConfirmOpen(false)}
-                onConfirm={confirmerSuppression}
-                isConfirming={isSupprimant}
-                titre="Supprimer ce client ?"
-                message={`Voulez-vous vraiment supprimer ${client.nom} ? Cette action est irréversible.`}
-                erreur={erreurSuppression}
-            />
+    isOpen={isConfirmOpen}
+    onClose={() => setIsConfirmOpen(false)}
+    onConfirm={confirmerSuppression}
+    isConfirming={isSupprimant}
+    titre="Supprimer ce client ?"
+    message={`Voulez-vous vraiment supprimer ${client.nom} ? Cette action est irréversible.`}
+    erreur={erreurSuppression}
+/>
         </div>
     );
 }
