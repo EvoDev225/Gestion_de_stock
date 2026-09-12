@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { ProduitAvecStock } from "@/types/produit";
 import Image from "next/image";
+import { formaterPrixFCFA } from "@/lib/utils/format-currency";
 
 interface ProductsTableProps {
     produits: ProduitAvecStock[];
@@ -91,12 +92,12 @@ export default function ProductsTable({
 
                                 {/* Prix d'achat */}
                                 <td className="py-3 px-6 text-sm text-muted-foreground">
-                                    {produit.prixAchat} €
+                                    {formaterPrixFCFA(produit.prixAchat)}
                                 </td>
 
                                 {/* Prix de vente */}
                                 <td className="py-3 px-6 text-sm font-semibold text-primary">
-                                    {produit.prixVente} €
+                                    {formaterPrixFCFA(produit.prixVente)}
                                 </td>
 
                                 {/* Stock — calculé via Σ lots, plus jamais produit.quantiteStock */}

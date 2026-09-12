@@ -219,14 +219,14 @@ export default function ProductFormModal({
                                     <input
                                         id="prixAchat"
                                         type="number"
-                                        step="0.01"
+                                        step="1"
                                         min="0"
                                         value={prixAchat}
                                         onChange={(e) => setPrixAchat(e.target.value)}
-                                        className="w-full rounded-lg border border-border bg-card px-3 py-2 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        className="w-full rounded-lg border border-border bg-card px-3 py-2 pr-14 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     />
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                        €
+                                        FCFA
                                     </span>
                                 </div>
                             </div>
@@ -240,14 +240,14 @@ export default function ProductFormModal({
                                     <input
                                         id="prixVente"
                                         type="number"
-                                        step="0.01"
+                                        step="1"
                                         min="0"
                                         value={prixVente}
                                         onChange={(e) => setPrixVente(e.target.value)}
-                                        className="w-full rounded-lg border border-border bg-card px-3 py-2 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        className="w-full rounded-lg border border-border bg-card px-3 py-2 pr-14 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     />
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                                        €
+                                        FCFA
                                     </span>
                                 </div>
                             </div>

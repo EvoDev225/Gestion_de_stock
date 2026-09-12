@@ -10,6 +10,7 @@ import {
     AlertTriangle,
 } from "lucide-react";
 import type { Produit } from "@/types/produit";
+import { formaterPrixFCFA } from "@/lib/utils/format-currency";
 
 interface ProductCardProps {
     produit: Produit;
@@ -117,7 +118,7 @@ export default function ProductCard({
 
             <div className="flex items-center justify-between pt-2 border-t border-border">
                 <span className="font-semibold text-primary">
-                    {produit.prixVente} €
+                    {formaterPrixFCFA(produit.prixVente)}
                 </span>
 
                 <div className="flex items-center gap-2">
