@@ -40,9 +40,14 @@ export async function PATCH(
         return NextResponse.json({ error: "Vente introuvable" }, { status: 404 });
     }
     if (venteExistante.statut === "ANNULEE") {
-        return NextResponse.json({ error: "Cette vente est déjà annulée" }, { status: 409 });
+        return NextResponse.json({ error: "Cette vente est déjà annulée" }, { status: 403 });
     }
-
+    if (acces.session.role === "EMPLOYEE" && venteExistante.utilisateurId !== acces.session.id) {
+    return NextResponse.json(
+        { error: "Vous ne pouvez annuler que vos propres ventes" },
+        { status: 403 }
+    );
+}
     const vente = await annulerVente(id, acces.session.id);
 return NextResponse.json(serialiserVente(vente));
 }
