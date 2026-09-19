@@ -130,14 +130,14 @@ export default function ClientDetailPageClient({
             />
 
             <ConfirmDialog
-    isOpen={isConfirmOpen}
-    onClose={() => setIsConfirmOpen(false)}
-    onConfirm={confirmerSuppression}
-    isConfirming={isSupprimant}
-    titre="Supprimer ce client ?"
-    message={`Voulez-vous vraiment supprimer ${client.nom} ? Cette action est irréversible.`}
-    erreur={erreurSuppression}
-/>
+                isOpen={isConfirmOpen}
+                onCancel={() => setIsConfirmOpen(false)}
+                onConfirm={confirmerSuppression}
+                isConfirming={isSupprimant}
+                title="Supprimer ce client ?"
+                message={`Voulez-vous vraiment supprimer ${client.nom} ? Cette action est irréversible.`}
+                erreur={erreurSuppression}
+            />
         </div>
     );
 }
