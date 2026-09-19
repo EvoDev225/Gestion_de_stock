@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { Fournisseur, FournisseurFormData } from "@/types/fournisseur";
 import FournisseursToolbar from "@/components/admin/fournisseurs/FournisseursToolbar";
 import FournisseursTable from "@/components/admin/fournisseurs/FournisseursTable";
@@ -87,7 +88,7 @@ export default function FournisseursPageClient({
 
             if (!response.ok) {
                 const message = await lireMessageErreur(response);
-                alert(message);
+                toast.error(message);
                 return;
             }
 
@@ -107,6 +108,7 @@ export default function FournisseursPageClient({
                 return [fournisseurSauvegarde, ...prev];
             });
 
+            toast.success(isEdition ? "Fournisseur modifié avec succès." : "Fournisseur créé avec succès.");
             handleFermerModal();
         } finally {
             setIsSubmitting(false);
@@ -132,7 +134,7 @@ export default function FournisseursPageClient({
 
             if (!response.ok) {
                 const message = await lireMessageErreur(response);
-                alert(message);
+                toast.error(message);
                 return;
             }
 
@@ -141,6 +143,7 @@ export default function FournisseursPageClient({
                     (fournisseur) => fournisseur.id !== fournisseurASupprimer.id
                 )
             );
+            toast.success(`${fournisseurASupprimer.nom} a été supprimé avec succès.`);
         } finally {
             setIsDeleting(false);
             setFournisseurASupprimer(null);
@@ -175,7 +178,7 @@ export default function FournisseursPageClient({
                     ))}
                 </div>
             ) : (
-                <div className="rounded-lg border border-gray-200 bg-white px-6 py-12 text-center text-sm text-gray-500">
+                <div className="rounded-lg border border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
                     Aucun fournisseur trouvé
                 </div>
             )}
@@ -191,10 +194,10 @@ export default function FournisseursPageClient({
 
             <ConfirmDialog
                 isOpen={Boolean(fournisseurASupprimer)}
-                onClose={() => setFournisseurASupprimer(null)}
+                onCancel={() => setFournisseurASupprimer(null)}
                 onConfirm={confirmSuppression}
                 title="Supprimer le fournisseur"
-                description={`Êtes-vous sûr de vouloir supprimer le fournisseur "${fournisseurASupprimer?.nom ?? ""}" ? Cette action est irréversible.`}
+                message={`Êtes-vous sûr de vouloir supprimer le fournisseur "${fournisseurASupprimer?.nom ?? ""}" ? Cette action est irréversible.`}
                 variant="danger"
                 isConfirming={isDeleting}
             />
