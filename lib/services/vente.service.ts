@@ -157,6 +157,40 @@ export async function creerVente(data: {
 
 export async function annulerVente(id: string, utilisateurId: string) {
     return prisma.$transaction(async (tx) => {
+        const venteExistante = await tx.vente.findUnique({
+            where: { id },
+            include: { ligneVentes: true },
+        });
+
+        if (!venteExistante) {
+            throw new Error("Vente introuvable");
+        }
+        if (venteExistante.statut === "ANNULEE") {
+            throw new Error("Cette vente est déjà annulée");
+        }
+
+        // Restockage : réincrémenter chaque lot débité lors de la vente,
+        // symétrique à la décrémentation faite dans creerVente.
+        for (const ligne of venteExistante.ligneVentes) {
+            await tx.lot.update({
+                where: { id: ligne.lotId },
+                data: { quantite: { increment: ligne.quantite } },
+            });
+
+            await tx.mouvementStock.create({
+                data: {
+                    produitId: ligne.produitId,
+                    varianteId: ligne.varianteId,
+                    lotId: ligne.lotId,
+                    typeMouvement: "ENTREE",
+                    quantite: ligne.quantite,
+                    motif: `Annulation vente ${id}`,
+                    dateMouvement: new Date(),
+                    utilisateurId,
+                },
+            });
+        }
+
         const vente = await tx.vente.update({
             where: { id },
             data: { statut: "ANNULEE" },
@@ -171,7 +205,7 @@ export async function annulerVente(id: string, utilisateurId: string) {
             action: "VENTE_ANNULEE",
             entiteConcerneeType: "Vente",
             entiteConcerneeId: vente.id,
-            details: `Annulation de la vente ${vente.id}`,
+            details: `Annulation de la vente ${vente.id}, ${venteExistante.ligneVentes.length} ligne(s) restockée(s)`,
             utilisateurId,
         }, tx);
 
