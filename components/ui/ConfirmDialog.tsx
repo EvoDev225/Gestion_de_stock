@@ -13,6 +13,7 @@ interface ConfirmDialogProps {
     isConfirming?: boolean;
     onConfirm: () => void;
     onCancel: () => void;
+    erreur?: string | null;
 }
 
 export default function ConfirmDialog({
@@ -25,6 +26,7 @@ export default function ConfirmDialog({
     isConfirming = false,
     onConfirm,
     onCancel,
+    erreur,
 }: ConfirmDialogProps) {
     // Fermeture avec la touche Escape
     useEffect(() => {
@@ -61,6 +63,9 @@ export default function ConfirmDialog({
                             {title}
                         </h2>
                         <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+                        {erreur && (
+                            <p className="mt-2 text-sm text-destructive">{erreur}</p>
+                        )}
                     </div>
                     <button
                         type="button"
