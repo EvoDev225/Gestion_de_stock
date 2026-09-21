@@ -17,7 +17,7 @@ import type { Produit } from "@/types/produit";
 
 const ITEMS_PER_PAGE = 10;
 
-export default function StockPageClient() {
+export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "EMPLOYEE" } = {}) {
     const [activeTab, setActiveTab] = useState<"lots" | "mouvements">("lots");
 
     // ── Données ──
@@ -195,7 +195,7 @@ export default function StockPageClient() {
 
     return (
         <div className="flex flex-col gap-6">
-            <StockPageHeader onCreateLotClick={handleOpenCreateLot} />
+            <StockPageHeader onCreateLotClick={handleOpenCreateLot} role={role} />
 
             <StockTabs
                 activeTab={activeTab}
@@ -222,7 +222,8 @@ export default function StockPageClient() {
                             <LotsTable
                                 lots={lotsPagePagines}
                                 onEdit={handleOpenEditLot}
-                                onDelete={handleOpenDeleteLot}   // 👈 avant: handleDeleteLot
+                                onDelete={handleOpenDeleteLot}
+                                role={role}
                             />
 
                             <div className="flex flex-col gap-3 lg:hidden">
@@ -236,7 +237,8 @@ export default function StockPageClient() {
                                             key={lot.id}
                                             lot={lot}
                                             onEdit={handleOpenEditLot}
-                                            onDelete={handleOpenDeleteLot}   // 👈 avant: handleDeleteLot
+                                            onDelete={handleOpenDeleteLot}
+                                            role={role}
                                         />
                                     ))
                                 )}
