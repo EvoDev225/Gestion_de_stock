@@ -45,8 +45,11 @@ export function LoginForm() {
                 return;
             }
 
-            // Redirection vers le dashboard et rafraîchissement des cookies de session
-            router.push("/dashboard");
+            const { utilisateur } = await res.json();
+            const destination = utilisateur.role === "EMPLOYEE" ? "/dashboard/employe" : "/dashboard";
+
+            // Redirection vers la page correspondant au rôle, puis rafraîchissement des cookies de session
+            router.push(destination);
             router.refresh();
         } catch (err) {
             setErreur("Une erreur est survenue, réessayez.");
