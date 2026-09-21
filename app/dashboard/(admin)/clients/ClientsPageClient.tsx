@@ -157,10 +157,10 @@ export default function ClientsPageClient({ clients, role }: ClientsPageClientPr
 
             <ConfirmDialog
                 isOpen={clientASupprimer !== null}
-                onClose={() => setClientASupprimer(null)}
+                onCancel={() => setClientASupprimer(null)}
                 onConfirm={confirmerSuppression}
                 isConfirming={isSupprimantClient}
-                titre="Supprimer ce client ?"
+                title="Supprimer ce client ?"
                 message={
                     clientASupprimer
                         ? `Voulez-vous vraiment supprimer ${clientASupprimer.nom} ? Cette action est irréversible.`
