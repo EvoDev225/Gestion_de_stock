@@ -4,10 +4,12 @@ import { Plus } from "lucide-react";
 
 interface ProductsPageHeaderProps {
     onCreateClick: () => void;
+    role?: "ADMIN" | "EMPLOYEE";
 }
 
 export default function ProductsPageHeader({
     onCreateClick,
+    role,
 }: ProductsPageHeaderProps) {
     return (
         <header className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-end">
@@ -21,21 +23,23 @@ export default function ProductsPageHeader({
                 </p>
             </div>
 
-            {/* ── Bouton d'action ── */}
-            <button
-                type="button"
-                onClick={onCreateClick}
-                className="
-            inline-flex items-center justify-center gap-2
-            rounded-full bg-primary text-white
-            px-6 py-3
-            text-sm font-medium
-            transition-opacity hover:opacity-90
-        "
-            >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Nouveau produit
-            </button>
+            {/* ── Bouton d'action (masqué pour les employés) ── */}
+            {role !== "EMPLOYEE" && (
+                <button
+                    type="button"
+                    onClick={onCreateClick}
+                    className="
+                        inline-flex items-center justify-center gap-2
+                        rounded-full bg-primary text-white
+                        px-6 py-3
+                        text-sm font-medium
+                        transition-opacity hover:opacity-90
+                    "
+                >
+                    <Plus className="h-4 w-4" aria-hidden="true" />
+                    Nouveau produit
+                </button>
+            )}
         </header>
     );
 }
