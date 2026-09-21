@@ -15,7 +15,7 @@ import type { Produit, Categorie, Variante, StatutFiltre, VueAffichage } from "@
 
 const ITEMS_PER_PAGE = 10;
 
-export default function ProductsPageClient() {
+export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "EMPLOYEE" } = {}) {
     const [produits, setProduits] = useState<Produit[]>([]);
     const [categories, setCategories] = useState<Categorie[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -253,7 +253,7 @@ export default function ProductsPageClient() {
 
     return (
         <div className="flex flex-col gap-6">
-            <ProductsPageHeader onCreateClick={handleOpenCreateModal} />
+            <ProductsPageHeader onCreateClick={handleOpenCreateModal} role={role} />
 
             <ProductsKpiCards
                 total={kpis.total}
@@ -291,6 +291,7 @@ export default function ProductsPageClient() {
                             onEdit={handleOpenEditModal}
                             onManageVariants={handleOpenVariantsPanel}
                             onArchiveToggle={handleArchiveToggle}
+                            role={role}
                         />
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -306,6 +307,7 @@ export default function ProductsPageClient() {
                                         onEdit={handleOpenEditModal}
                                         onManageVariants={handleOpenVariantsPanel}
                                         onArchiveToggle={handleArchiveToggle}
+                                        role={role}
                                     />
                                 ))
                             )}
@@ -339,6 +341,7 @@ export default function ProductsPageClient() {
                 onAddVariant={handleAddVariant}
                 onEditVariant={handleEditVariant}
                 onDeleteVariant={handleDeleteVariant}
+                role={role}
             />
         </div>
     );
