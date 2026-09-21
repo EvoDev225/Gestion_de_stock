@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
     LayoutDashboard,
     Receipt,
@@ -11,22 +11,17 @@ import {
     Boxes,
     BarChart3,
     Settings,
+    LogOut,
     ChevronDown,
     X,
-    LogOut,
+    type LucideIcon,
 } from "lucide-react";
-
-import { cn } from "@/lib/utils";
-import { useSidebar } from "../contexts/SidebarContext";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import { useSidebar } from "@/components/contexts/SidebarContext";
 
 interface NavItem {
     label: string;
     href: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: LucideIcon;
 }
 
 interface NavSection {
@@ -39,16 +34,10 @@ interface EmployeeSidebarProps {
     userRole?: string;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Navigation — périmètre EMPLOYEE                                    */
-/* ------------------------------------------------------------------ */
-
 const navSections: NavSection[] = [
     {
         title: "Vue d'ensemble",
-        items: [
-            { label: "Tableau de bord", href: "/dashboard/employe", icon: LayoutDashboard },
-        ],
+        items: [{ label: "Tableau de bord", href: "/dashboard/employe", icon: LayoutDashboard }],
     },
     {
         title: "Ventes",
@@ -73,222 +62,170 @@ const navSections: NavSection[] = [
     },
 ];
 
-/* ------------------------------------------------------------------ */
-/*  Composant                                                          */
-/* ------------------------------------------------------------------ */
-
 export default function EmployeeSidebar({
     userName = "Employé Dupont",
     userRole = "EMPLOYEE",
 }: EmployeeSidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const { isOpen, closeSidebar } = useSidebar();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const {
+        isMobileOpen,
+        closeMobile,
+        openSections,
+        toggleSection,
+    } = useSidebar();
 
-    /* Accordéon mobile : une section ouverte à la fois */
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>(
-        () =>
-            Object.fromEntries(
-                navSections.map((section) => [
-                    section.title,
-                    section.items.some((item) => pathname.startsWith(item.href)),
-                ]),
-            ),
-    );
+    const getInitials = (name: string): string =>
+        name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
 
-    const toggleSection = (title: string) => {
-        setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+    // Ferme le drawer mobile à chaque changement de route
+    useEffect(() => {
+        closeMobile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pathname]);
+
+    // Une section est "ouverte" si l'utilisateur l'a togglée (mobile uniquement),
+    // ou par défaut si elle contient la page active
+    const isSectionOpen = (section: NavSection) => {
+        if (section.title in openSections) return openSections[section.title];
+        return section.items.some((item) => item.href === pathname);
     };
 
-    /* Déconnexion */
     const handleLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
         try {
             await fetch("/api/auth/logout", { method: "POST" });
-        } finally {
             router.push("/login");
+            router.refresh(); // force le middleware à revalider l'absence de session
+        } catch (error) {
+            console.error("Erreur lors de la déconnexion :", error);
+            setIsLoggingOut(false);
         }
     };
-
-    /* Initiales pour l'avatar */
-    const initiales = userName
-        .split(" ")
-        .map((mot) => mot[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-
-    /* ---------------------------------------------------------------- */
-    /*  Rendu d'un lien de navigation                                    */
-    /* ---------------------------------------------------------------- */
-
-    const renderNavItem = (item: NavItem, compact: boolean = false) => {
-        const actif =
-            item.href === "/dashboard/employe"
-                ? pathname === item.href
-                : pathname.startsWith(item.href);
-
-        return (
-            <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeSidebar}
-                className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    actif
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-                    compact && "justify-center px-2",
-                )}
-                title={compact ? item.label : undefined}
-            >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {!compact && <span>{item.label}</span>}
-            </Link>
-        );
-    };
-
-    /* ---------------------------------------------------------------- */
-    /*  Contenu de la sidebar (réutilisé pour drawer et sidebar fixe)    */
-    /* ---------------------------------------------------------------- */
-
-    const sidebarContent = (compact: boolean = false) => (
-        <div className="flex h-full flex-col">
-            {/* Logo */}
-            <div
-                className={cn(
-                    "flex h-16 shrink-0 items-center border-b border-border",
-                    compact ? "justify-center px-2" : "gap-3 px-4",
-                )}
-            >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
-                    CE
-                </div>
-                {!compact && (
-                    <span className="text-lg font-semibold tracking-tight">
-                        CorticalEvo
-                    </span>
-                )}
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto px-3 py-4">
-                <ul className="space-y-6">
-                    {navSections.map((section) => (
-                        <li key={section.title}>
-                            {/* Titre de section */}
-                            {!compact && (
-                                <button
-                                    type="button"
-                                    onClick={() => toggleSection(section.title)}
-                                    className="mb-1 flex w-full items-center justify-between px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                                >
-                                    <span>{section.title}</span>
-                                    <ChevronDown
-                                        className={cn(
-                                            "h-3.5 w-3.5 transition-transform",
-                                            openSections[section.title] && "rotate-180",
-                                        )}
-                                    />
-                                </button>
-                            )}
-
-                            {/* Items */}
-                            {(compact || openSections[section.title]) && (
-                                <ul className={cn("space-y-1", !compact && "mt-1")}>
-                                    {section.items.map((item) => (
-                                        <li key={item.href}>
-                                            {renderNavItem(item, compact)}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </li>
-                    ))}
-                </ul>
-            </nav>
-
-            {/* Bloc profil */}
-            <div
-                className={cn(
-                    "shrink-0 border-t border-border p-4",
-                    compact && "flex flex-col items-center px-2",
-                )}
-            >
-                <div
-                    className={cn(
-                        "flex items-center gap-3",
-                        compact && "flex-col gap-2",
-                    )}
-                >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
-                        {initiales}
-                    </div>
-                    {!compact && (
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{userName}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                                {userRole}
-                            </p>
-                        </div>
-                    )}
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className={cn(
-                            "shrink-0 rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive",
-                            compact && "mt-1",
-                        )}
-                        title="Se déconnecter"
-                    >
-                        <LogOut className="h-4 w-4" />
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-    /* ---------------------------------------------------------------- */
-    /*  JSX principal                                                    */
-    /* ---------------------------------------------------------------- */
 
     return (
         <>
             {/* Overlay mobile */}
-            {isOpen && (
+            {isMobileOpen && (
                 <div
-                    className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-                    onClick={closeSidebar}
+                    className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-40 md:hidden"
+                    onClick={closeMobile}
                     aria-hidden="true"
                 />
             )}
 
-            {/* Drawer mobile */}
             <aside
-                className={cn(
-                    "fixed inset-y-0 left-0 z-50 w-64 transform bg-background shadow-lg transition-transform duration-200 ease-in-out lg:hidden",
-                    isOpen ? "translate-x-0" : "-translate-x-full",
-                )}
+                className={`fixed left-0 top-0 h-screen bg-card shadow-[24px_0_48px_rgba(26,26,26,0.04)] flex flex-col z-50 border-r border-border
+                    transition-transform duration-300 ease-in-out
+                    w-72 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+                    md:translate-x-0 md:w-20 lg:w-64`}
             >
-                {/* Bouton fermer mobile */}
-                <button
-                    type="button"
-                    onClick={closeSidebar}
-                    className="absolute right-3 top-4 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                >
-                    <X className="h-5 w-5" />
-                </button>
+                {/* Logo */}
+                <div className="h-20 flex items-center justify-between px-4 shrink-0 overflow-hidden">
+                    <span className="inline md:hidden lg:inline text-xl font-bold text-primary whitespace-nowrap">
+                        CorticalEvo
+                    </span>
+                    <span className="hidden md:inline lg:hidden text-xl font-bold text-primary">
+                        CE
+                    </span>
 
-                {sidebarContent()}
-            </aside>
+                    <button
+                        type="button"
+                        onClick={closeMobile}
+                        className="md:hidden text-muted-foreground hover:text-primary p-1"
+                        aria-label="Fermer le menu"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
 
-            {/* Rail tablette (md) — icônes uniquement */}
-            <aside className="hidden md:fixed md:inset-y-0 md:left-0 md:z-30 md:block md:w-16 md:border-r md:border-border md:bg-background lg:hidden">
-                {sidebarContent(true)}
-            </aside>
+                {/* Navigation */}
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 flex flex-col gap-2">
+                    {navSections.map((section) => {
+                        const sectionOpen = isSectionOpen(section);
 
-            {/* Sidebar complète (lg+) */}
-            <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:block lg:w-64 lg:border-r lg:border-border lg:bg-background">
-                {sidebarContent()}
+                        return (
+                            <div key={section.title} className="group/section">
+                                <button
+                                    type="button"
+                                    onClick={() => toggleSection(section.title)}
+                                    className="w-full flex md:hidden items-center justify-between px-3 mb-1 text-xs font-semibold font-display text-muted-foreground uppercase tracking-wider"
+                                >
+                                    {section.title}
+                                    <ChevronDown
+                                        className={`w-3.5 h-3.5 transition-transform duration-200 ${
+                                            sectionOpen ? "rotate-0" : "-rotate-90"
+                                        }`}
+                                    />
+                                </button>
+
+                                <div className="hidden md:block lg:hidden h-px bg-border mx-2 mb-2" />
+
+                                <p className="hidden lg:block px-3 mb-1 text-xs font-semibold font-display text-muted-foreground uppercase tracking-wider">
+                                    {section.title}
+                                </p>
+
+                                <div
+                                    className={`flex flex-col gap-1 overflow-hidden transition-all duration-200
+                                        md:max-h-none lg:max-h-none
+                                        ${!sectionOpen ? "max-h-0" : "max-h-[500px]"}
+                                    `}
+                                >
+                                    {section.items.map((item) => {
+                                        const Icon = item.icon;
+                                        const isActive = pathname === item.href;
+
+                                        return (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                title={item.label}
+                                                className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors
+                                                    md:justify-center lg:justify-start
+                                                    ${
+                                                        isActive
+                                                            ? "bg-primary/10 text-primary font-bold border-l-4 border-primary md:border-l-0 lg:border-l-4"
+                                                            : "text-muted-foreground hover:text-primary hover:bg-muted/50"
+                                                    }`}
+                                            >
+                                                <Icon className="w-5 h-5 shrink-0" />
+                                                <span className="text-sm font-medium truncate md:hidden lg:inline">
+                                                    {item.label}
+                                                </span>
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </nav>
+
+                {/* Profile Block */}
+                <div className="p-3 border-t border-border mt-auto shrink-0">
+                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm border border-border shrink-0">
+                                {getInitials(userName)}
+                            </div>
+                            <div className="overflow-hidden md:hidden lg:block">
+                                <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{userRole}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            disabled={isLoggingOut}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:hidden lg:block"
+                            aria-label="Déconnexion"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
             </aside>
         </>
     );
