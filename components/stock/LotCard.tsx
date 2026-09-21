@@ -7,6 +7,7 @@ interface LotCardProps {
     lot: Lot;
     onEdit: (lot: Lot) => void;
     onDelete: (lot: Lot) => void;
+    role?: "ADMIN" | "EMPLOYEE";
 }
 
 function formatDate(dateString: string): string {
@@ -21,7 +22,7 @@ function getDaysUntil(dateString: string): number {
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export default function LotCard({ lot, onEdit, onDelete }: LotCardProps) {
+export default function LotCard({ lot, onEdit, onDelete, role }: LotCardProps) {
     const daysUntilExpiration = lot.dateExpiration
         ? getDaysUntil(lot.dateExpiration)
         : null;
@@ -46,25 +47,27 @@ export default function LotCard({ lot, onEdit, onDelete }: LotCardProps) {
                     )}
                 </div>
 
-                {/* Droite : Actions */}
-                <div className="flex items-center gap-1 shrink-0">
-                    <button
-                        type="button"
-                        onClick={() => onEdit(lot)}
-                        title="Modifier"
-                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                        <Pencil className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => onDelete(lot)}
-                        title="Supprimer"
-                        className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                    >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                </div>
+                {/* Droite : Actions (masquées pour les employés) */}
+                {role !== "EMPLOYEE" && (
+                    <div className="flex items-center gap-1 shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => onEdit(lot)}
+                            title="Modifier"
+                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        >
+                            <Pencil className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => onDelete(lot)}
+                            title="Supprimer"
+                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                        >
+                            <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* ── Ligne du bas : Quantité + Expiration ── */}
