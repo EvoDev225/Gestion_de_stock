@@ -2,7 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import { obtenirSessionServeur } from "@/lib/auth";
 import { obtenirClientParId } from "@/lib/services/client.service";
 import { serialiserClientAvecVentes } from "@/lib/serializers/client";
-import ClientDetailPageClient from "@/app/dashboard/clients/ClientDetailPageClient";
+import ClientDetailPageClient from "../ClientDetailPageClient";
+
 
 export default async function ClientDetailPage({
     params,
@@ -12,7 +13,7 @@ export default async function ClientDetailPage({
     const session = await obtenirSessionServeur();
 
     if (!session) {
-        redirect("/connexion");
+        redirect("/login");
     }
 
     const { id } = await params;
