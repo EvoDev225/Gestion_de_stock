@@ -7,6 +7,7 @@ interface LotsTableProps {
     lots: Lot[];
     onEdit: (lot: Lot) => void;
     onDelete: (lot: Lot) => void;
+    role?: "ADMIN" | "EMPLOYEE";
 }
 
 function formatDate(dateString: string): string {
@@ -21,7 +22,7 @@ function getDaysUntil(dateString: string): number {
     return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-export default function LotsTable({ lots, onEdit, onDelete }: LotsTableProps) {
+export default function LotsTable({ lots, onEdit, onDelete, role }: LotsTableProps) {
     return (
         <div className="hidden lg:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-left">
@@ -32,13 +33,15 @@ export default function LotsTable({ lots, onEdit, onDelete }: LotsTableProps) {
                         <th className="py-3 px-6">Quantité</th>
                         <th className="py-3 px-6">Date de réception</th>
                         <th className="py-3 px-6">Date d'expiration</th>
-                        <th className="py-3 px-6 text-right">Actions</th>
+                        {role !== "EMPLOYEE" && (
+                            <th className="py-3 px-6 text-right">Actions</th>
+                        )}
                     </tr>
                 </thead>
                 <tbody>
                     {lots.length === 0 ? (
                         <tr>
-                            <td colSpan={6} className="py-12 px-6 text-center text-muted-foreground">
+                            <td colSpan={role === "EMPLOYEE" ? 5 : 6} className="py-12 px-6 text-center text-muted-foreground">
                                 <div className="flex flex-col items-center gap-3">
                                     <PackageOpen className="h-10 w-10 opacity-50" aria-hidden="true" />
                                     <span className="text-sm font-medium">Aucun lot trouvé</span>
@@ -113,26 +116,28 @@ export default function LotsTable({ lots, onEdit, onDelete }: LotsTableProps) {
                                     </td>
 
                                     {/* Actions */}
-                                    <td className="py-3 px-6">
-                                        <div className="flex justify-end gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => onEdit(lot)}
-                                                title="Modifier"
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                            >
-                                                <Pencil className="h-4 w-4" aria-hidden="true" />
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => onDelete(lot)}
-                                                title="Supprimer"
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                                            >
-                                                <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                            </button>
-                                        </div>
-                                    </td>
+                                    {role !== "EMPLOYEE" && (
+                                        <td className="py-3 px-6">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onEdit(lot)}
+                                                    title="Modifier"
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                >
+                                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onDelete(lot)}
+                                                    title="Supprimer"
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                                                >
+                                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             );
                         })
