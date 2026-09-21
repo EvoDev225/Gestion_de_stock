@@ -17,6 +17,7 @@ interface ProductCardProps {
     onEdit: (produit: Produit) => void;
     onManageVariants: (produit: Produit) => void;
     onArchiveToggle: (produit: Produit) => void;
+    role?: "ADMIN" | "EMPLOYEE";
 }
 
 export default function ProductCard({
@@ -24,6 +25,7 @@ export default function ProductCard({
     onEdit,
     onManageVariants,
     onArchiveToggle,
+    role,
 }: ProductCardProps) {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -78,17 +80,19 @@ export default function ProductCard({
 
                     {isMenuOpen && (
                         <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-card z-50 overflow-hidden">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onEdit(produit);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
-                            >
-                                <Pencil className="h-4 w-4" aria-hidden="true" />
-                                Éditer
-                            </button>
+                            {role !== "EMPLOYEE" && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onEdit(produit);
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted"
+                                >
+                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                    Éditer
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => {
@@ -100,17 +104,19 @@ export default function ProductCard({
                                 <Layers className="h-4 w-4" aria-hidden="true" />
                                 Gérer les variantes
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    onArchiveToggle(produit);
-                                    setIsMenuOpen(false);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted hover:text-destructive"
-                            >
-                                <Archive className="h-4 w-4" aria-hidden="true" />
-                                {produit.archive ? "Désarchiver" : "Archiver"}
-                            </button>
+                            {role !== "EMPLOYEE" && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onArchiveToggle(produit);
+                                        setIsMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-muted hover:text-destructive"
+                                >
+                                    <Archive className="h-4 w-4" aria-hidden="true" />
+                                    {produit.archive ? "Désarchiver" : "Archiver"}
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
