@@ -4,6 +4,8 @@ import { obtenirSessionServeur } from "@/lib/auth";
 import { SidebarProvider } from "@/components/contexts/SidebarContext";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminTopbar from "@/components/admin/AdminTopbar";
+import EmployeeSidebar from "@/components/employe/EmployeeSidebar";
+import EmployeeTopbar from "@/components/employe/EmployeeTopbar";
 import { Toaster } from "sonner";
 
 export default async function DashboardLayout({
@@ -18,12 +20,22 @@ export default async function DashboardLayout({
     }
 
     const roleAffiche = session.role === "ADMIN" ? "Administrateur" : session.role;
+    const estAdmin = session.role === "ADMIN";
 
     return (
         <SidebarProvider>
             <div className="min-h-screen bg-background">
-                <AdminSidebar userName={session.nom} userRole={roleAffiche} />
-                <AdminTopbar userName={session.nom} userRole={roleAffiche} />
+                {estAdmin ? (
+                    <>
+                        <AdminSidebar userName={session.nom} userRole={roleAffiche} />
+                        <AdminTopbar userName={session.nom} userRole={roleAffiche} />
+                    </>
+                ) : (
+                    <>
+                        <EmployeeSidebar userName={session.nom} userRole={roleAffiche} />
+                        <EmployeeTopbar userName={session.nom} userRole={roleAffiche} />
+                    </>
+                )}
 
                 {/* La marge suit la largeur réelle de la sidebar à chaque breakpoint */}
                 <main className="ml-0 md:ml-20 lg:ml-64 px-4 md:px-6 lg:px-8 py-6 transition-[margin] duration-300">
