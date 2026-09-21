@@ -1,103 +1,93 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Bell, Menu, Search } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
 
+import { Search, Bell, Menu } from "lucide-react";
 import ThemeToggle from "../shared/ThemeToggle";
-import { useSidebar } from "../contexts/SidebarContext";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import { useSidebar } from "@/components/contexts/SidebarContext";
 
 interface EmployeeTopbarProps {
     userName?: string;
     userRole?: string;
+    hasNotifications?: boolean;
+    onSearch?: (value: string) => void;
 }
-
-/* ------------------------------------------------------------------ */
-/*  Composant                                                          */
-/* ------------------------------------------------------------------ */
 
 export default function EmployeeTopbar({
     userName = "Employé Dupont",
     userRole = "EMPLOYEE",
+    hasNotifications = false,
+    onSearch,
 }: EmployeeTopbarProps) {
-    const { openSidebar } = useSidebar();
-    const [recherche, setRecherche] = useState("");
+    const [searchQuery, setSearchQuery] = useState("");
+    const { openMobile } = useSidebar();
 
-    /* Notifications — placeholder, à brancher sur un vrai compteur plus tard */
-    const nombreNotifications = 0;
+    const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearchQuery(value);
+        if (onSearch) {
+            onSearch(value);
+        }
+    };
 
-    /* Initiales pour l'avatar */
-    const initiales = userName
-        .split(" ")
-        .map((mot) => mot[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+    const getInitials = (name: string): string => {
+        return name
+            .split(" ")
+            .map((part) => part[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
+    };
 
     return (
-        <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center gap-4 border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6">
-            {/* Bouton menu mobile */}
+        <header className="h-20 ml-0 md:ml-20 lg:ml-64 bg-background/80 backdrop-blur-xl border-b border-border/30 flex justify-between items-center px-4 md:px-8 sticky top-0 z-40 transition-colors">
+            {/* Hamburger — mobile uniquement, ouvre le drawer */}
             <button
                 type="button"
-                onClick={openSidebar}
-                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground lg:hidden"
+                onClick={openMobile}
+                className="md:hidden p-2 -ml-2 mr-2 text-muted-foreground hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
                 aria-label="Ouvrir le menu"
             >
-                <Menu className="h-5 w-5" />
+                <Menu className="w-5 h-5" />
             </button>
 
             {/* Barre de recherche */}
-            <div className="relative w-full max-w-md">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="relative w-full max-w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
                 <input
-                    type="search"
-                    value={recherche}
-                    onChange={(e) => setRecherche(e.target.value)}
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground"
                     placeholder="Rechercher une vente, un client..."
-                    className="h-9 w-full rounded-md border border-border bg-muted/40 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
             </div>
 
-            {/* Actions à droite */}
-            <div className="ml-auto flex items-center gap-2">
-                {/* Thème */}
-                <ThemeToggle />
-
-                {/* Notifications */}
-                <Link
-                    href="/dashboard/notifications"
-                    className="relative rounded-md p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            {/* Actions (Notifications, Thème, Profil) */}
+            <div className="flex items-center gap-4">
+                <button
+                    type="button"
+                    className="relative p-2 text-muted-foreground hover:bg-muted/50 rounded-full transition-colors cursor-pointer"
                     aria-label="Notifications"
                 >
-                    <Bell className="h-5 w-5" />
-                    {nombreNotifications > 0 && (
-                        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
-                            {nombreNotifications}
-                        </span>
+                    <Bell className="w-5 h-5" />
+                    {hasNotifications && (
+                        <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-destructive rounded-full border-2 border-background" />
                     )}
-                </Link>
+                </button>
 
-                {/* Bloc profil */}
-                <Link
-                    href="/dashboard/profil"
-                    className="flex items-center gap-3 rounded-md px-2 py-1.5 transition-colors hover:bg-accent"
-                >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
-                        {initiales}
+                <ThemeToggle />
+
+                <div className="h-8 w-px bg-border/30 mx-2 hidden sm:block" />
+
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground hidden md:block">
+                        {userName}
+                    </span>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs border border-border shrink-0">
+                        {getInitials(userName)}
                     </div>
-                    <div className="hidden text-left md:block">
-                        <p className="truncate text-sm font-medium leading-tight">
-                            {userName}
-                        </p>
-                        <p className="truncate text-xs leading-tight text-muted-foreground">
-                            {userRole}
-                        </p>
-                    </div>
-                </Link>
+                </div>
             </div>
         </header>
     );
