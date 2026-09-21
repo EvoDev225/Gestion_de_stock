@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import { obtenirSessionServeur } from "@/lib/auth";
 import { listerClients } from "@/lib/services/client.service";
 import { serialiserClients } from "@/lib/serializers/client";
-import ClientsPageClient from "@/app/dashboard/clients/ClientsPageClient";
+import ClientsPageClient from "./ClientsPageClient";
+
 
 export default async function ClientsPage() {
   const session = await obtenirSessionServeur();
