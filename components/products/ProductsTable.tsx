@@ -9,15 +9,16 @@ import {
     ArchiveRestore,
     PackageX,
 } from "lucide-react";
-import type { ProduitAvecStock } from "@/types/produit";
+import type { Produit } from "@/types/produit";
 import Image from "next/image";
 import { formaterPrixFCFA } from "@/lib/utils/format-currency";
 
 interface ProductsTableProps {
-    produits: ProduitAvecStock[];
-    onEdit: (produit: ProduitAvecStock) => void;
-    onManageVariants: (produit: ProduitAvecStock) => void;
-    onArchiveToggle: (produit: ProduitAvecStock) => void;
+    produits: Produit[];
+    onEdit: (produit: Produit) => void;
+    onManageVariants: (produit: Produit) => void;
+    onArchiveToggle: (produit: Produit) => void;
+    role?: "ADMIN" | "EMPLOYEE";
 }
 
 export default function ProductsTable({
@@ -25,6 +26,7 @@ export default function ProductsTable({
     onEdit,
     onManageVariants,
     onArchiveToggle,
+    role,
 }: ProductsTableProps) {
     return (
         <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -141,14 +143,16 @@ export default function ProductsTable({
                                 {/* Actions */}
                                 <td className="py-3 px-6">
                                     <div className="flex justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => onEdit(produit)}
-                                            title="Éditer"
-                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        >
-                                            <Pencil className="h-4 w-4" aria-hidden="true" />
-                                        </button>
+                                        {role !== "EMPLOYEE" && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onEdit(produit)}
+                                                title="Éditer"
+                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            >
+                                                <Pencil className="h-4 w-4" aria-hidden="true" />
+                                            </button>
+                                        )}
                                         <button
                                             type="button"
                                             onClick={() => onManageVariants(produit)}
@@ -157,14 +161,16 @@ export default function ProductsTable({
                                         >
                                             <Layers className="h-4 w-4" aria-hidden="true" />
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => onArchiveToggle(produit)}
-                                            title={produit.archive ? "Désarchiver" : "Archiver"}
-                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                                        >
-                                            <Archive className="h-4 w-4" aria-hidden="true" />
-                                        </button>
+                                        {role !== "EMPLOYEE" && (
+                                            <button
+                                                type="button"
+                                                onClick={() => onArchiveToggle(produit)}
+                                                title={produit.archive ? "Désarchiver" : "Archiver"}
+                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                                            >
+                                                <Archive className="h-4 w-4" aria-hidden="true" />
+                                            </button>
+                                        )}
                                     </div>
                                 </td>
                             </tr>
