@@ -11,6 +11,10 @@ import ProductCard from "@/components/products/ProductCard";
 import ProductsPagination from "@/components/products/ProductsPagination";
 import ProductFormModal from "@/components/products/ProductFormModal";
 import VariantsPanel from "@/components/products/VariantsPanel";
+import ProductsTabs from "@/components/products/ProductsTabs";
+import CategoriesTab from "@/components/products/CategoriesTab";
+import CategorieFormModal from "@/components/products/CategorieFormModal";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { Produit, Categorie, Variante, StatutFiltre, VueAffichage } from "@/types/produit";
 
 const ITEMS_PER_PAGE = 10;
@@ -36,6 +40,14 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
     const [produitPourVariantes, setProduitPourVariantes] = useState<Produit | null>(null);
     const [variantes, setVariantes] = useState<Variante[]>([]);
 
+    // Gestion des catégories
+    const [activeTab, setActiveTab] = useState<"produits" | "categories">("produits");
+    const [isCategorieModalOpen, setIsCategorieModalOpen] = useState(false);
+    const [categorieEnEdition, setCategorieEnEdition] = useState<Categorie | null>(null);
+    const [categorieASupprimer, setCategorieASupprimer] = useState<Categorie | null>(null);
+    const [erreurSuppressionCategorie, setErreurSuppressionCategorie] = useState<string | null>(null);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
     // ── Chargement initial : produits + catégories ──
     const fetchProduits = useCallback(async () => {
         setIsLoading(true);
@@ -53,6 +65,7 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
     }, []);
 
     const fetchCategories = useCallback(async () => {
+        setIsLoadingCategories(true);
         try {
             const res = await fetch("/api/categories");
             if (!res.ok) throw new Error("Erreur lors du chargement des catégories");
@@ -61,6 +74,8 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
         } catch (error) {
             console.error(error);
             toast.error("Impossible de charger les catégories.");
+        } finally {
+            setIsLoadingCategories(false);
         }
     }, []);
 
@@ -251,75 +266,163 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
         }
     };
 
+    // ── Actions catégories ──
+    const handleOpenCreateCategorie = () => {
+        setCategorieEnEdition(null);
+        setIsCategorieModalOpen(true);
+    };
+
+    const handleOpenEditCategorie = (categorie: Categorie) => {
+        setCategorieEnEdition(categorie);
+        setIsCategorieModalOpen(true);
+    };
+
+    const handleSubmitCategorie = async (data: { nom: string; description: string }) => {
+        const isEdition = categorieEnEdition !== null;
+        const url = isEdition ? `/api/categories/${categorieEnEdition!.id}` : "/api/categories";
+        const method = isEdition ? "PATCH" : "POST";
+
+        const res = await fetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+            const errorBody = await res.json().catch(() => ({}));
+            toast.error(errorBody.error ?? "Erreur lors de l'enregistrement de la catégorie");
+            throw new Error(errorBody.error ?? "Erreur lors de l'enregistrement de la catégorie");
+        }
+
+        await fetchCategories();
+        toast.success(isEdition ? "Catégorie modifiée avec succès." : "Catégorie créée avec succès.");
+    };
+
+    const handleOpenDeleteCategorie = (categorie: Categorie) => {
+        setErreurSuppressionCategorie(null);
+        setCategorieASupprimer(categorie);
+    };
+
+    const confirmDeleteCategorie = async () => {
+        if (!categorieASupprimer) return;
+        try {
+            const res = await fetch(`/api/categories/${categorieASupprimer.id}`, { method: "DELETE" });
+            if (!res.ok) {
+                const errorBody = await res.json().catch(() => ({}));
+                setErreurSuppressionCategorie(errorBody.error ?? "Erreur lors de la suppression");
+                return;
+            }
+            await fetchCategories();
+            toast.success("Catégorie supprimée avec succès.");
+            setCategorieASupprimer(null);
+        } catch (error) {
+            console.error(error);
+            setErreurSuppressionCategorie("Erreur lors de la suppression");
+        }
+    };
+
     return (
         <div className="flex flex-col gap-6">
             <ProductsPageHeader onCreateClick={handleOpenCreateModal} role={role} />
 
-            <ProductsKpiCards
-                total={kpis.total}
-                actifs={kpis.actifs}
-                archives={kpis.archives}
-                enRupture={kpis.enRupture}
-            />
+            {role !== "EMPLOYEE" && (
+                <ProductsTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    produitsCount={produits.length}
+                    categoriesCount={categories.length}
+                />
+            )}
 
-            <LowStockBanner
-                count={produitsEnStockBas.length}
-                onFilterClick={() => setStatusFilter("actifs")}
-            />
-
-            <ProductsToolbar
-                searchValue={searchValue}
-                onSearchChange={setSearchValue}
-                categories={categories}
-                selectedCategoryId={selectedCategoryId}
-                onCategoryChange={setSelectedCategoryId}
-                statusFilter={statusFilter}
-                onStatusChange={setStatusFilter}
-                view={view}
-                onViewChange={setView}
-            />
-
-            {isLoading ? (
-                <div className="text-center py-12 text-muted-foreground text-sm">
-                    Chargement des produits...
-                </div>
-            ) : (
+            {activeTab === "produits" && (
                 <>
-                    {view === "table" ? (
-                        <ProductsTable
-                            produits={produitsPage}
-                            onEdit={handleOpenEditModal}
-                            onManageVariants={handleOpenVariantsPanel}
-                            onArchiveToggle={handleArchiveToggle}
-                            role={role}
-                        />
-                    ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {produitsPage.length === 0 ? (
-                                <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
-                                    Aucun produit trouvé
-                                </div>
-                            ) : (
-                                produitsPage.map((produit) => (
-                                    <ProductCard
-                                        key={produit.id}
-                                        produit={produit}
-                                        onEdit={handleOpenEditModal}
-                                        onManageVariants={handleOpenVariantsPanel}
-                                        onArchiveToggle={handleArchiveToggle}
-                                        role={role}
-                                    />
-                                ))
-                            )}
-                        </div>
-                    )}
+                    <ProductsKpiCards
+                        total={kpis.total}
+                        actifs={kpis.actifs}
+                        archives={kpis.archives}
+                        enRupture={kpis.enRupture}
+                    />
 
-                    <ProductsPagination
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        totalItems={produitsFiltres.length}
-                        itemsPerPage={ITEMS_PER_PAGE}
-                        onPageChange={setCurrentPage}
+                    <LowStockBanner
+                        count={produitsEnStockBas.length}
+                        onFilterClick={() => setStatusFilter("actifs")}
+                    />
+
+                    <ProductsToolbar
+                        searchValue={searchValue}
+                        onSearchChange={setSearchValue}
+                        categories={categories}
+                        selectedCategoryId={selectedCategoryId}
+                        onCategoryChange={setSelectedCategoryId}
+                        statusFilter={statusFilter}
+                        onStatusChange={setStatusFilter}
+                        view={view}
+                        onViewChange={setView}
+                    />
+
+                    {isLoading ? (
+                        <div className="text-center py-12 text-muted-foreground text-sm">
+                            Chargement des produits...
+                        </div>
+                    ) : (
+                        <>
+                            {view === "table" ? (
+                                <ProductsTable
+                                    produits={produitsPage}
+                                    onEdit={handleOpenEditModal}
+                                    onManageVariants={handleOpenVariantsPanel}
+                                    onArchiveToggle={handleArchiveToggle}
+                                    role={role}
+                                />
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {produitsPage.length === 0 ? (
+                                        <div className="col-span-full text-center py-12 text-muted-foreground text-sm">
+                                            Aucun produit trouvé
+                                        </div>
+                                    ) : (
+                                        produitsPage.map((produit) => (
+                                            <ProductCard
+                                                key={produit.id}
+                                                produit={produit}
+                                                onEdit={handleOpenEditModal}
+                                                onManageVariants={handleOpenVariantsPanel}
+                                                onArchiveToggle={handleArchiveToggle}
+                                                role={role}
+                                            />
+                                        ))
+                                    )}
+                                </div>
+                            )}
+
+                            <ProductsPagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalItems={produitsFiltres.length}
+                                itemsPerPage={ITEMS_PER_PAGE}
+                                onPageChange={setCurrentPage}
+                            />
+                        </>
+                    )}
+                </>
+            )}
+
+            {activeTab === "categories" && role !== "EMPLOYEE" && (
+                <>
+                    <div className="flex justify-end">
+                        <button
+                            type="button"
+                            onClick={handleOpenCreateCategorie}
+                            className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                        >
+                            Nouvelle catégorie
+                        </button>
+                    </div>
+                    <CategoriesTab
+                        categories={categories}
+                        isLoading={isLoadingCategories}
+                        onEdit={handleOpenEditCategorie}
+                        onDelete={handleOpenDeleteCategorie}
                     />
                 </>
             )}
@@ -342,6 +445,24 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
                 onEditVariant={handleEditVariant}
                 onDeleteVariant={handleDeleteVariant}
                 role={role}
+            />
+
+            <CategorieFormModal
+                key={categorieEnEdition?.id ?? "nouvelle-categorie"}
+                isOpen={isCategorieModalOpen}
+                onClose={() => setIsCategorieModalOpen(false)}
+                categorie={categorieEnEdition}
+                onSubmit={handleSubmitCategorie}
+            />
+
+            <ConfirmDialog
+                isOpen={categorieASupprimer !== null}
+                title="Supprimer cette catégorie ?"
+                message={`La catégorie "${categorieASupprimer?.nom}" sera supprimée définitivement.`}
+                confirmLabel="Supprimer"
+                onConfirm={confirmDeleteCategorie}
+                onCancel={() => setCategorieASupprimer(null)}
+                erreur={erreurSuppressionCategorie}
             />
         </div>
     );
