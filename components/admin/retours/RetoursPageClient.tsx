@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import type { Retour } from "@/types/retour";
 import RetoursToolbar from "./RetoursToolbar";
 import RetoursTable from "./RetoursTable";
 import RetourCard from "./RetourCard";
 import RetoursPagination from "./RetoursPagination";
+import RetourFormModal from "./RetourFormModal";
 
 interface RetoursPageClientProps {
     retoursInitiaux: Retour[];
@@ -18,9 +20,45 @@ const TAILLE_PAGE = 10;
 export default function RetoursPageClient({
     retoursInitiaux,
 }: RetoursPageClientProps) {
-    const [retours] = useState<Retour[]>(retoursInitiaux);
+    const [retours, setRetours] = useState<Retour[]>(retoursInitiaux);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [filtreType, setFiltreType] = useState<TypeFiltre>("TOUS");
     const [pageActuelle, setPageActuelle] = useState<number>(1);
+
+    const fetchRetours = useCallback(async () => {
+        try {
+            const res = await fetch("/api/retours");
+            if (!res.ok) throw new Error("Erreur lors du chargement des retours");
+            const data: Retour[] = await res.json();
+            setRetours(data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Impossible de charger les retours.");
+        }
+    }, []);
+
+    const handleSubmitRetour = async (data: {
+        typeRetour: "CLIENT" | "FOURNISSEUR";
+        venteId?: string;
+        commandeFournisseurId?: string;
+        motif?: string;
+        lignes: { ligneVenteId?: string; lotId?: string; quantite: number }[];
+    }) => {
+        const res = await fetch("/api/retours", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+
+        if (!res.ok) {
+            const errorBody = await res.json().catch(() => ({}));
+            toast.error(errorBody.error ?? "Erreur lors de la creation du retour");
+            throw new Error(errorBody.error ?? "Erreur lors de la creation du retour");
+        }
+
+        await fetchRetours();
+        toast.success("Retour enregistre avec succes.");
+    };
 
     // Calcul des compteurs basé sur la liste complète (non filtrée)
     const compteurs = useMemo(() => ({
@@ -56,6 +94,17 @@ export default function RetoursPageClient({
 
     return (
         <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-semibold text-foreground">Retours</h1>
+                <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 transition-opacity"
+                >
+                    Nouveau retour
+                </button>
+            </div>
+
             <RetoursToolbar
                 filtreType={filtreType}
                 onFiltreTypeChange={gestionnaireFiltreChange}
@@ -88,6 +137,12 @@ export default function RetoursPageClient({
                     />
                 </>
             )}
+
+            <RetourFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onSubmit={handleSubmitRetour}
+            />
         </div>
     );
 }
