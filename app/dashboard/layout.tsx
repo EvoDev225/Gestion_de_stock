@@ -42,7 +42,7 @@ export default async function DashboardLayout({
                     {children}
                 </main>
             </div>
-            <Toaster richColors position="top-right" />
+            <Toaster richColors position="top-center" />
         </SidebarProvider>
     );
 }
