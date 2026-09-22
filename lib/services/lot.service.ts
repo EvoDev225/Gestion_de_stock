@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-async function genererNumeroLot(): Promise<string> {
+export async function genererNumeroLot(): Promise<string> {
   const total = await prisma.lot.count();
   return `LOT-${String(total + 1).padStart(5, "0")}`;
 }
