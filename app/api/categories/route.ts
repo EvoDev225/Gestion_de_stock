@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Le nom est requis" }, { status: 400 });
     }
 
-    const categorie = await creerCategorie(body);
+    const categorie = await creerCategorie({
+        nom: body.nom,
+        description: body.description,
+    });
     return NextResponse.json(categorie, { status: 201 });
 }

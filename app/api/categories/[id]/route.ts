@@ -32,7 +32,10 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const categorie = await modifierCategorie(id, body);
+    const categorie = await modifierCategorie(id, {
+        nom: body.nom,
+        description: body.description,
+    });
     return NextResponse.json(categorie);
 }
 
