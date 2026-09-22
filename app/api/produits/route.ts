@@ -16,9 +16,9 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
 
-  if (!body.nom || !body.sku || body.prixAchat === undefined || body.prixVente === undefined) {
+  if (!body.nom || body.prixAchat === undefined || body.prixVente === undefined) {
     return NextResponse.json(
-      { error: "nom, sku, prixAchat et prixVente sont requis" },
+      { error: "nom, prixAchat et prixVente sont requis" },
       { status: 400 }
     );
   }
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(produit, { status: 201 });
   } catch (error) {
     return NextResponse.json(
-      { error: "SKU déjà utilisé ou données invalides" },
+      { error: "Données invalides" },
       { status: 409 }
     );
   }
