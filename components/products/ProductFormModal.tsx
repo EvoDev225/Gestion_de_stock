@@ -13,7 +13,6 @@ interface ProductFormModalProps {
     categories: Categorie[];
     onSubmit: (data: {
         nom: string;
-        sku: string;
         description: string;
         categorieId: string | null;
         prixAchat: string;
@@ -31,7 +30,6 @@ export default function ProductFormModal({
     onSubmit,
 }: ProductFormModalProps) {
     const [nom, setNom] = useState(produit?.nom ?? "");
-    const [sku, setSku] = useState(produit?.sku ?? "");
     const [description, setDescription] = useState(produit?.description ?? "");
     const [categorieId, setCategorieId] = useState<string | null>(produit?.categorie?.id ?? null);
     const [prixAchat, setPrixAchat] = useState(produit?.prixAchat?.toString() ?? "");
@@ -53,7 +51,6 @@ export default function ProductFormModal({
         try {
             await onSubmit({
                 nom,
-                sku,
                 description,
                 categorieId,
                 prixAchat,
@@ -150,7 +147,7 @@ export default function ProductFormModal({
                                     <span className="text-sm font-medium">Téléchargement en cours...</span>
                                 </div>
                             ) : apercuLocal ?? imageUrl ? (
-                                <div className="relative w-full max-w-xs h-48"> {/* ← h-48 déplacé ici pour le fill */}
+                                <div className="relative w-full max-w-xs h-48">
                                     <Image
                                         src={apercuLocal ?? imageUrl ?? ""}
                                         alt="Aperçu du produit"
@@ -199,20 +196,24 @@ export default function ProductFormModal({
                                 />
                             </div>
 
-                            {/* SKU */}
-                            <div className="flex flex-col gap-2">
-                                <label htmlFor="sku" className="text-sm font-medium text-foreground">
-                                    SKU
-                                </label>
-                                <input
-                                    id="sku"
-                                    type="text"
-                                    value={sku}
-                                    onChange={(e) => setSku(e.target.value.toUpperCase())}
-                                    className="font-mono rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                    required
-                                />
-                            </div>
+                            {/* SKU (Lecture seule en mode édition) */}
+                            {produit && (
+                                <div className="flex flex-col gap-2">
+                                    <label htmlFor="sku" className="text-sm font-medium text-foreground">
+                                        SKU
+                                    </label>
+                                    <input
+                                        id="sku"
+                                        type="text"
+                                        value={produit.sku}
+                                        disabled
+                                        className="font-mono rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                                    />
+                                    <span className="text-xs text-muted-foreground">
+                                        Généré automatiquement, non modifiable
+                                    </span>
+                                </div>
+                            )}
 
                             {/* Catégorie */}
                             <div className="flex flex-col gap-2">
