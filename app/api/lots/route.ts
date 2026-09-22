@@ -8,7 +8,8 @@ export async function GET(request: NextRequest) {
 
     const produitId = request.nextUrl.searchParams.get("produitId") ?? undefined;
     const varianteId = request.nextUrl.searchParams.get("varianteId") ?? undefined;
-    const lots = await listerLots(produitId, varianteId);
+    const commandeFournisseurId = request.nextUrl.searchParams.get("commandeFournisseurId") ?? undefined;
+    const lots = await listerLots(produitId, varianteId, commandeFournisseurId);
     return NextResponse.json(lots);
 }
 

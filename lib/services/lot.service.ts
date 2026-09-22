@@ -4,11 +4,18 @@ export async function genererNumeroLot(): Promise<string> {
   const total = await prisma.lot.count();
   return `LOT-${String(total + 1).padStart(5, "0")}`;
 }
-export async function listerLots(produitId?: string, varianteId?: string) {
+export async function listerLots(
+    produitId?: string,
+    varianteId?: string,
+    commandeFournisseurId?: string
+) {
     return prisma.lot.findMany({
         where: {
             ...(produitId && { produitId }),
             ...(varianteId && { varianteId }),
+            ...(commandeFournisseurId && {
+                receptionFournisseur: { commandeFournisseurId },
+            }),
         },
         include: {
             produit: true,
@@ -18,7 +25,7 @@ export async function listerLots(produitId?: string, varianteId?: string) {
                 },
             },
             _count: {
-                select: { mouvementStocks: true }, // 👈 ajouté — à vérifier vs schema.prisma
+                select: { mouvementStocks: true },
             },
         },
         orderBy: { dateExpiration: "asc" },
