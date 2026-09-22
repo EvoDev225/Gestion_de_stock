@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-
+async function genererSkuVariante(produitId: string): Promise<string> {
+  const produit = await prisma.produit.findUnique({ where: { id: produitId }, select: { sku: true } });
+  if (!produit) throw new Error("Produit introuvable");
+  const existantes = await prisma.variante.count({ where: { produitId } });
+  return `${produit.sku}-${String(existantes + 1).padStart(2, "0")}`;
+}
 export async function listerVariantes(produitId?: string) {
     const variantes = await prisma.variante.findMany({
         where: produitId ? { produitId } : undefined,
@@ -32,15 +37,12 @@ export async function obtenirVarianteParId(id: string) {
     });
 }
 
-export async function creerVariante(data: {
-    nomVariante: string;
-    skuVariante: string;
-    produitId: string;
-}) {
-    return prisma.variante.create({
-        data,
-        include: { produit: true },
-    });
+export async function creerVariante(data: { nomVariante: string; produitId: string }) {
+  const skuVariante = await genererSkuVariante(data.produitId);
+  return prisma.variante.create({
+    data: { ...data, skuVariante },
+    include: { produit: true },
+  });
 }
 
 export async function modifierVariante(
