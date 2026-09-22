@@ -9,7 +9,7 @@ interface VariantsPanelProps {
     onClose: () => void;
     produit: Produit | null;
     variantes: Variante[];
-    onAddVariant: (data: { nomVariante: string; skuVariante: string }) => Promise<void>;
+    onAddVariant: (data: { nomVariante: string }) => Promise<void>;
     onDeleteVariant: (varianteId: string) => Promise<void>;
     onEditVariant: (varianteId: string, data: { nomVariante: string; skuVariante: string }) => Promise<void>;
     role?: "ADMIN" | "EMPLOYEE";
@@ -26,7 +26,6 @@ export default function VariantsPanel({
     role,
 }: VariantsPanelProps) {
     const [newNom, setNewNom] = useState("");
-    const [newSku, setNewSku] = useState("");
     const [isAdding, setIsAdding] = useState(false);
 
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -37,12 +36,11 @@ export default function VariantsPanel({
     if (!isOpen || !produit) return null;
 
     const handleAdd = async () => {
-        if (!newNom.trim() || !newSku.trim()) return;
+        if (!newNom.trim()) return;
         setIsAdding(true);
         try {
-            await onAddVariant({ nomVariante: newNom.trim(), skuVariante: newSku.trim() });
+            await onAddVariant({ nomVariante: newNom.trim() });
             setNewNom("");
-            setNewSku("");
         } finally {
             setIsAdding(false);
         }
@@ -208,17 +206,10 @@ export default function VariantsPanel({
                                 onChange={(e) => setNewNom(e.target.value)}
                                 className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
-                            <input
-                                type="text"
-                                placeholder="SKU variante"
-                                value={newSku}
-                                onChange={(e) => setNewSku(e.target.value.toUpperCase())}
-                                className="flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                            />
                             <button
                                 type="button"
                                 onClick={handleAdd}
-                                disabled={!newNom.trim() || !newSku.trim() || isAdding}
+                                disabled={!newNom.trim() || isAdding}
                                 className="shrink-0 bg-primary text-primary-foreground rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                             >
                                 {isAdding ? "Ajout..." : "Ajouter"}
