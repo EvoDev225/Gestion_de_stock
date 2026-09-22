@@ -12,13 +12,28 @@ export async function listerCommandesFournisseur() {
 }
 
 export async function obtenirCommandeFournisseurParId(id: string) {
-    return prisma.commandeFournisseur.findUnique({
+    const commande = await prisma.commandeFournisseur.findUnique({
         where: { id },
         include: {
             fournisseur: true,
-            ligneCommandeFournisseur: { include: { produit: true } },
+            ligneCommandeFournisseur: {
+                include: {
+                    produit: true,
+                    lignesReception: true,
+                },
+            },
         },
     });
+
+    if (!commande) return null;
+
+    return {
+        ...commande,
+        ligneCommandeFournisseur: commande.ligneCommandeFournisseur.map((ligne) => ({
+            ...ligne,
+            quantiteRecue: ligne.lignesReception.reduce((total, r) => total + r.quantiteRecue, 0),
+        })),
+    };
 }
 
 export async function creerCommandeFournisseur(data: {
