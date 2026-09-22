@@ -12,7 +12,6 @@ interface LotFormModalProps {
     lot: Lot | null;
     produits: Produit[];
     onSubmit: (data: {
-        numeroLot: string;
         quantite: number;
         dateReception: string;
         dateExpiration: string;
@@ -29,7 +28,6 @@ export default function LotFormModal({
     onSubmit,
 }: LotFormModalProps) {
     // Initialisation directe depuis `lot` (le parent doit passer une `key` pour forcer le remount)
-    const [numeroLot, setNumeroLot] = useState(lot?.numeroLot ?? "");
     const [produitId, setProduitId] = useState<string | null>(
         lot?.produitId ?? lot?.produit?.id ?? null
     );
@@ -79,25 +77,24 @@ export default function LotFormModal({
     };
 
     const handleSubmit = async () => {
-    if (!produitId || !numeroLot.trim()) return;
+        if (!produitId) return;
 
-    setIsSubmitting(true);
-    try {
-        await onSubmit({
-            numeroLot: numeroLot.trim(),
-            quantite,
-            dateReception,
-            dateExpiration,
-            produitId: varianteId ? null : produitId,   // 👈 mutuellement exclusif
-            varianteId,
-        });
-        onClose();
-    } catch (error) {
-        console.error("Erreur lors de la soumission du lot :", error);
-    } finally {
-        setIsSubmitting(false);
-    }
-};
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                quantite,
+                dateReception,
+                dateExpiration,
+                produitId: varianteId ? null : produitId,   // 👈 mutuellement exclusif
+                varianteId,
+            });
+            onClose();
+        } catch (error) {
+            console.error("Erreur lors de la soumission du lot :", error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     return (
         <div
@@ -128,20 +125,24 @@ export default function LotFormModal({
                 {/* ── Corps scrollable ── */}
                 <div className="flex-1 overflow-y-auto p-6">
                     <div className="flex flex-col gap-6">
-                        {/* Numéro de lot */}
-                        <div className="flex flex-col gap-2">
-                            <label htmlFor="numeroLot" className="text-sm font-medium text-foreground">
-                                Numéro de lot
-                            </label>
-                            <input
-                                id="numeroLot"
-                                type="text"
-                                value={numeroLot}
-                                onChange={(e) => setNumeroLot(e.target.value)}
-                                className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                required
-                            />
-                        </div>
+                        {/* Numéro de lot (Lecture seule en mode édition) */}
+                        {lot && (
+                            <div className="flex flex-col gap-2">
+                                <label htmlFor="numeroLot" className="text-sm font-medium text-foreground">
+                                    Numéro de lot
+                                </label>
+                                <input
+                                    id="numeroLot"
+                                    type="text"
+                                    value={lot.numeroLot}
+                                    disabled
+                                    className="font-mono rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground cursor-not-allowed"
+                                />
+                                <span className="text-xs text-muted-foreground">
+                                    Généré automatiquement, non modifiable
+                                </span>
+                            </div>
+                        )}
 
                         {/* Produit */}
                         <div className="flex flex-col gap-2">
@@ -252,7 +253,7 @@ export default function LotFormModal({
                     <button
                         type="button"
                         onClick={handleSubmit}
-                        disabled={isSubmitting || !produitId || !numeroLot.trim()}
+                        disabled={isSubmitting || !produitId}
                         className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                     >
                         {isSubmitting ? "Enregistrement..." : "Enregistrer"}
@@ -261,4 +262,4 @@ export default function LotFormModal({
             </div>
         </div>
     );
-}                                                                                                           
+}
