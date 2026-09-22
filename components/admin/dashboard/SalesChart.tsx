@@ -6,10 +6,11 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
+import { formaterPrixFCFA } from "@/lib/utils/format-currency";
 
 export interface SalesChartDataPoint {
   date: string; // format "YYYY-MM-DD" ou libellé court déjà formaté
-  montant: number; // en euros
+  montant: number; // en FCFA
 }
 
 export interface SalesChartProps {
@@ -23,7 +24,7 @@ export interface SalesChartProps {
 const PRIMARY_COLOR = "var(--primary)";
 const MUTED_FOREGROUND_COLOR = "var(--muted-foreground)";
 
-// Composant Tooltip personnalisé pour afficher le montant en euros
+// Composant Tooltip personnalisé pour afficher le montant en FCFA
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{ value?: number }>;
@@ -33,11 +34,7 @@ interface CustomTooltipProps {
 const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const value = payload[0].value ?? 0;
-    const formattedAmount = new Intl.NumberFormat("fr-FR", {
-      style: "currency",
-      currency: "EUR",
-      maximumFractionDigits: 0,
-    }).format(value);
+    const formattedAmount = formaterPrixFCFA(value);
     return (
       <div className="bg-foreground text-background text-xs px-3 py-1.5 rounded-md shadow-lg font-sans">
         <p className="font-semibold mb-0.5">{label}</p>

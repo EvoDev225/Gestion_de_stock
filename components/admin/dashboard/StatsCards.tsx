@@ -1,10 +1,11 @@
-import { Package, AlertTriangle, Euro, Clock } from "lucide-react";
+import { Package, AlertTriangle, Wallet, Clock } from "lucide-react";
+import { formaterPrixFCFA } from "@/lib/utils/format-currency";
 
 export interface StatsCardsProps {
     stats: {
         produitsEnStock: number;
         alertesRupture: number;
-        ventesDuMois: number; // en euros
+        ventesDuMois: number; // en FCFA
         commandesEnAttente: number;
     };
     isLoading?: boolean;
@@ -14,15 +15,6 @@ export default function StatsCards({ stats, isLoading = false }: StatsCardsProps
     // Formatage des nombres en français
     const formatNumber = (value: number) => {
         return new Intl.NumberFormat("fr-FR").format(value);
-    };
-
-    // Formatage de la devise en euros
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat("fr-FR", {
-            style: "currency",
-            currency: "EUR",
-            maximumFractionDigits: 0,
-        }).format(value);
     };
 
     return (
@@ -73,7 +65,7 @@ export default function StatsCards({ stats, isLoading = false }: StatsCardsProps
             <div className="bg-card p-6 rounded-[24px] ambient-shadow relative overflow-hidden">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                        <Euro className="w-6 h-6" />
+                        <Wallet className="w-6 h-6" />
                     </div>
                     <h3 className="text-sm font-medium text-muted-foreground">
                         Ventes du mois
@@ -83,7 +75,7 @@ export default function StatsCards({ stats, isLoading = false }: StatsCardsProps
                     <div className="h-8 w-32 bg-muted animate-pulse rounded-md" />
                 ) : (
                     <p className="text-3xl font-bold text-foreground">
-                        {formatCurrency(stats.ventesDuMois)}
+                        {formaterPrixFCFA(stats.ventesDuMois)}
                     </p>
                 )}
             </div>
