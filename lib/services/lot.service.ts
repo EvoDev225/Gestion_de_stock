@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
+async function genererNumeroLot(): Promise<string> {
+  const total = await prisma.lot.count();
+  return `LOT-${String(total + 1).padStart(5, "0")}`;
+}
 export async function listerLots(produitId?: string, varianteId?: string) {
     return prisma.lot.findMany({
         where: {
@@ -37,33 +41,22 @@ export async function obtenirLotParId(id: string) {
 }
 
 export async function creerLot(data: {
-    numeroLot: string;
-    dateExpiration?: Date;
-    quantite: number;
-    dateReception: Date;
-    produitId?: string;
-    varianteId?: string;
+  dateExpiration?: Date;
+  quantite: number;
+  dateReception: Date;
+  produitId?: string;
+  varianteId?: string;
 }) {
-    const cibleProduit = Boolean(data.produitId);
-    const cibleVariante = Boolean(data.varianteId);
-
-    if (cibleProduit === cibleVariante) {
-        throw new Error(
-            "Un lot doit être rattaché à exactement un produit OU une variante, jamais les deux ni aucun"
-        );
-    }
-
-    return prisma.lot.create({
-        data,
-        include: {
-            produit: true,
-            variante: {
-                include: {
-                    produit: true,
-                },
-            },
-        },
-    });
+  const cibleProduit = Boolean(data.produitId);
+  const cibleVariante = Boolean(data.varianteId);
+  if (cibleProduit === cibleVariante) {
+    throw new Error("Un lot doit être rattaché à exactement un produit OU une variante, jamais les deux ni aucun");
+  }
+  const numeroLot = await genererNumeroLot();
+  return prisma.lot.create({
+    data: { ...data, numeroLot },
+    include: { produit: true, variante: { include: { produit: true } } },
+  });
 }
 
 export async function modifierLot(
