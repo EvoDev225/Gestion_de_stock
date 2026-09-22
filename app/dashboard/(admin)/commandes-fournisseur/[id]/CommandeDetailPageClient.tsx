@@ -1,5 +1,3 @@
-// app/dashboard/commandes-fournisseur/[id]/CommandeDetailPageClient.tsx
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -10,6 +8,8 @@ import type { CommandeFournisseur, NouvelleLigneCommandeData, Produit } from "@/
 import LignesCommandeTable from "@/components/admin/commandes-fournisseur/LignesCommandeTable";
 import AjouterLigneModal from "@/components/admin/commandes-fournisseur/AjouterLigneModal";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ReceptionnerCommandeModal from "@/components/admin/receptions-fournisseur/ReceptionnerCommandeModal";
+
 
 const statutConfig = {
     EN_ATTENTE: { label: "En attente", classes: "bg-muted text-muted-foreground" },
@@ -46,6 +46,7 @@ export default function CommandeDetailPageClient({
     const [erreurApi, setErreurApi] = useState<string | null>(null);
     const [isSupprimantLigne, setIsSupprimantLigne] = useState(false);
     const [isSupprimantCommande, setIsSupprimantCommande] = useState(false);
+    const [modalReceptionOuvert, setModalReceptionOuvert] = useState(false);
 
     const modifiable = useMemo(() => commande.statut === "EN_ATTENTE", [commande.statut]);
     const statut = statutConfig[commande.statut];
@@ -151,6 +152,23 @@ export default function CommandeDetailPageClient({
         }
     };
 
+    const handleReceptionner = async (
+        lignes: { ligneCommandeFournisseurId: string; quantiteRecue: number }[]
+    ) => {
+        setErreurApi(null);
+        const res = await fetch("/api/receptions-fournisseur", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ commandeFournisseurId: commande.id, lignes }),
+        });
+        const result = await res.json();
+        if (!res.ok) {
+            setErreurApi(result.error || result.message || "Erreur lors de la reception.");
+            throw new Error(result.error);
+        }
+        router.refresh();
+    };
+
     const confirmSupprimerCommande = async () => {
         setIsSupprimantCommande(true);
         setErreurApi(null);
@@ -211,6 +229,14 @@ export default function CommandeDetailPageClient({
                             </button>
                         </>
                     )}
+                    {(commande.statut === "ENVOYEE" || commande.statut === "RECUE_PARTIELLE") && (
+                        <button
+                            onClick={() => setModalReceptionOuvert(true)}
+                            className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90"
+                        >
+                            Réceptionner
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -259,6 +285,18 @@ export default function CommandeDetailPageClient({
                 description="Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible."
                 variant="danger"
                 isConfirming={isSupprimantCommande}
+            />
+
+            <ReceptionnerCommandeModal
+                isOpen={modalReceptionOuvert}
+                onClose={() => setModalReceptionOuvert(false)}
+                lignes={commande.ligneCommandeFournisseur.map((l) => ({
+                    id: l.id,
+                    produit: l.produit,
+                    quantiteCommande: l.quantiteCommande,
+                    quantiteRecue: l.quantiteRecue ?? 0,
+                }))}
+                onSubmit={handleReceptionner}
             />
         </div>
     );

@@ -7,6 +7,7 @@ import { redirect, notFound } from "next/navigation";
 import CommandeDetailPageClient from "./CommandeDetailPageClient";
 import { serialiserCommande } from "@/lib/serializers/commande-fournisseur";
 
+
 export default async function CommandeDetailPage({
     params,
 }: {
