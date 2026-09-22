@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "../../generated/prisma/client";
 import { enregistrerActivite } from "./journal-activite.service";
+import { genererNumeroLot } from "./lot.service";
 
 export async function listerReceptions(commandeFournisseurId?: string) {
     return prisma.receptionFournisseur.findMany({
@@ -90,20 +91,28 @@ export async function creerReception(data: {
                 (lc) => lc.id === ligne.ligneCommandeFournisseurId
             )!;
 
+            const numeroLot = await genererNumeroLot();
+
+            const lot = await tx.lot.create({
+                data: {
+                    numeroLot,
+                    quantite: ligne.quantiteRecue,
+                    dateReception: new Date(),
+                    produitId: ligneCommande.produitId,
+                    receptionFournisseurId: reception.id,
+                },
+            });
+
             await tx.mouvementStock.create({
                 data: {
                     produitId: ligneCommande.produitId,
+                    lotId: lot.id,
                     typeMouvement: "ENTREE",
                     quantite: ligne.quantiteRecue,
                     motif: `Réception ${reception.id}`,
                     dateMouvement: new Date(),
                     utilisateurId: data.utilisateurId,
                 },
-            });
-
-            await tx.produit.update({
-                where: { id: ligneCommande.produitId },
-                data: { quantiteStock: { increment: ligne.quantiteRecue } },
             });
         }
 
