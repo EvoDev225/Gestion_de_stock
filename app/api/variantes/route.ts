@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    if (!body.nomVariante || !body.skuVariante || !body.produitId) {
+    if (!body.nomVariante || !body.produitId) {
         return NextResponse.json(
-            { error: "nomVariante, skuVariante et produitId sont requis" },
+            { error: "nomVariante et produitId sont requis" },
             { status: 400 }
         );
     }
@@ -28,6 +28,6 @@ export async function POST(request: NextRequest) {
         const variante = await creerVariante(body);
         return NextResponse.json(variante, { status: 201 });
     } catch (error) {
-        return NextResponse.json({ error: "skuVariante déjà utilisé" }, { status: 409 });
+        return NextResponse.json({ error: "Erreur lors de la création de la variante" }, { status: 409 });
     }
 }
