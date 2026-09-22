@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
-    if (!body.numeroLot || !body.dateExpiration || body.quantite === undefined || !body.dateReception) {
+    if (!body.dateExpiration || body.quantite === undefined || !body.dateReception) {
         return NextResponse.json(
-            { error: "numeroLot, dateExpiration, quantite et dateReception sont requis" },
+            { error: "dateExpiration, quantite et dateReception sont requis" },
             { status: 400 }
         );
     }
