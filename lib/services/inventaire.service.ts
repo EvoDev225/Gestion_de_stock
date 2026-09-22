@@ -36,10 +36,8 @@ export async function lancerInventaire(data: {
 
     const produits = await prisma.produit.findMany({
         where: { id: { in: data.produitIds } },
-        include: { variantes: { include: { lots: true } } },
+        include: { variantes: { include: { lots: true } }, lots: true },
     });
-
-    // ... reste inchangé
 
     // Produit sans variante -> 1 ligne sur le produit.
     // Produit avec variantes -> 1 ligne par variante, théorique = somme des lots.
@@ -53,10 +51,11 @@ export async function lancerInventaire(data: {
                 ecart: 0,
             }));
         }
+        const stockProduit = produit.lots.reduce((total, lot) => total + lot.quantite, 0);
         return [{
             produitId: produit.id,
             varianteId: null,
-            quantiteTheorique: produit.quantiteStock,
+            quantiteTheorique: stockProduit,
             quantitePhysique: 0,
             ecart: 0,
         }];
@@ -121,27 +120,25 @@ export async function validerInventaire(
             let lotAjustementId: string | undefined;
 
             if (ligne.varianteId) {
-                // Stock de variante = somme des lots. On crée un lot d'ajustement
-                // dédié (quantité potentiellement négative) plutôt que de modifier
-                // un lot physique existant, pour garder cette propriété toujours vraie.
-                
-
                 const lotAjustement = await tx.lot.create({
                     data: {
                         numeroLot: `AJUST-${id.slice(0, 8)}-${ligne.varianteId.slice(0, 8)}`,
                         quantite: ecart,
                         dateReception: new Date(),
-                        // dateExpiration: dateExpirationPlaceholder,
                         varianteId: ligne.varianteId,
                     },
                 });
                 lotAjustementId = lotAjustement.id;
             } else {
-                // Produit sans variante : quantiteStock est un champ direct, on l'écrase.
-                await tx.produit.update({
-                    where: { id: ligne.produitId },
-                    data: { quantiteStock: saisie.quantitePhysique },
+                const lotAjustement = await tx.lot.create({
+                    data: {
+                        numeroLot: `AJUST-${id.slice(0, 8)}-${ligne.produitId.slice(0, 8)}`,
+                        quantite: ecart,
+                        dateReception: new Date(),
+                        produitId: ligne.produitId,
+                    },
                 });
+                lotAjustementId = lotAjustement.id;
             }
 
             const mouvement = await tx.mouvementStock.create({
@@ -202,8 +199,8 @@ export async function ajouterLigneInventaire(
         const lots = await prisma.lot.findMany({ where: { varianteId } });
         quantiteTheorique = lots.reduce((total, lot) => total + lot.quantite, 0);
     } else {
-        const produit = await prisma.produit.findUniqueOrThrow({ where: { id: produitId } });
-        quantiteTheorique = produit.quantiteStock;
+        const lots = await prisma.lot.findMany({ where: { produitId } });
+        quantiteTheorique = lots.reduce((total, lot) => total + lot.quantite, 0);
     }
 
     return prisma.ligneInventaire.create({
