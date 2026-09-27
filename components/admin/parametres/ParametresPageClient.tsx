@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import type { Utilisateur } from "@/types/utilisateur";
 import type { ModifierProfilData } from "@/types/profil";
 import ModifierProfilForm from "./ModifierProfilForm";
@@ -12,13 +13,9 @@ interface ParametresPageClientProps {
 export default function ParametresPageClient({ utilisateur }: ParametresPageClientProps) {
     const [utilisateurCourant, setUtilisateurCourant] = useState<Utilisateur>(utilisateur);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [erreurApi, setErreurApi] = useState<string | null>(null);
-    const [succesMessage, setSuccesMessage] = useState<string | null>(null);
 
     async function handleModifierProfil(data: ModifierProfilData) {
         setIsSubmitting(true);
-        setErreurApi(null);
-        setSuccesMessage(null);
 
         try {
             const response = await fetch("/api/profil", {
@@ -34,13 +31,9 @@ export default function ParametresPageClient({ utilisateur }: ParametresPageClie
             }
 
             setUtilisateurCourant(result);
-            setSuccesMessage("Profil mis à jour avec succès.");
-
-            setTimeout(() => {
-                setSuccesMessage(null);
-            }, 3000);
+            toast.success("Profil mis à jour avec succès.");
         } catch (error) {
-            setErreurApi((error as Error).message);
+            toast.error((error as Error).message);
         } finally {
             setIsSubmitting(false);
         }
@@ -48,18 +41,6 @@ export default function ParametresPageClient({ utilisateur }: ParametresPageClie
 
     return (
         <div className="space-y-6">
-            {erreurApi && (
-                <div className="rounded-md border border-border bg-card p-4">
-                    <p className="text-sm font-medium text-destructive">{erreurApi}</p>
-                </div>
-            )}
-
-            {succesMessage && (
-                <div className="rounded-md border border-border bg-card p-4">
-                    <p className="text-sm font-medium text-foreground">{succesMessage}</p>
-                </div>
-            )}
-
             <ModifierProfilForm
                 utilisateur={utilisateurCourant}
                 onSubmit={handleModifierProfil}
