@@ -18,16 +18,15 @@ export default async function EmployeeDashboardPage() {
     }
 
     // 2. Récupération de toutes les ventes
-    const toutesLesVentes = await listerVentes();
+    const toutesLesVentes = await listerVentes(session.id);
 
     // 3. Calcul de la date du jour à minuit (début de journée) pour le filtrage
     const debutJournee = new Date();
     debutJournee.setHours(0, 0, 0, 0);
 
-    // 4. Filtrage des ventes du jour appartenant à l'utilisateur connecté (hors annulées)
+    // 4. Filtrage des ventes du jour (hors annulées) — l'appartenance à l'utilisateur est déjà garantie par listerVentes(session.id)
     const ventesDuJourUtilisateur = toutesLesVentes.filter(
         (vente) =>
-            vente.utilisateurId === session.id &&
             vente.statut !== "ANNULEE" &&
             new Date(vente.dateVente) >= debutJournee
     );
