@@ -33,15 +33,14 @@ export default function EmployeeVentesPageClient({ utilisateurId }: { utilisateu
                 throw new Error("Erreur lors de la récupération des ventes");
             }
             const data: Vente[] = await response.json();
-            const ventesUtilisateur = data.filter((vente) => vente.utilisateurId === utilisateurId);
-            setVentes(ventesUtilisateur);
+            setVentes(data);
         } catch (error) {
             console.error(error);
             toast.error("Impossible de charger vos ventes.");
         } finally {
             setIsLoading(false);
         }
-    }, [utilisateurId]);
+    }, []);
 
     useEffect(() => {
         fetchVentes();
