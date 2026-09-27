@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import InventairesPageHeader from "@/components/inventaires/InventairesPageHeader";
 import InventairesToolbar from "@/components/inventaires/InventairesToolbar";
 import InventairesTable from "@/components/inventaires/InventairesTable";
@@ -26,7 +27,6 @@ export default function InventairesPageClient() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [createError, setCreateError] = useState<string | null>(null);
 
     // ── Chargement ──
     const fetchInventaires = useCallback(async () => {
@@ -38,6 +38,7 @@ export default function InventairesPageClient() {
             setInventaires(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les inventaires.");
         } finally {
             setIsLoading(false);
         }
@@ -51,6 +52,7 @@ export default function InventairesPageClient() {
             setProduits(data.filter((p) => !p.archive));
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les produits.");
         }
     }, []);
 
@@ -91,7 +93,6 @@ export default function InventairesPageClient() {
     };
 
     const handleCreateInventaire = async (produitIds: string[]) => {
-        setCreateError(null);
         try {
             const res = await fetch("/api/inventaires", {
                 method: "POST",
@@ -106,21 +107,19 @@ export default function InventairesPageClient() {
 
             const nouvelInventaire: Inventaire = await res.json();
             await fetchInventaires();
+            toast.success("Inventaire lance avec succes.");
             router.push(`/dashboard/inventaires/${nouvelInventaire.id}`);
         } catch (error) {
             const message = error instanceof Error ? error.message : "Erreur inconnue";
-            setCreateError(message);
-            throw error; // relance pour que la modal reste ouverte et affiche isSubmitting correctement
+            toast.error(message);
+            throw error;
         }
     };
 
     return (
         <div className="flex flex-col gap-6">
             <InventairesPageHeader
-                onCreateClick={() => {
-                    setCreateError(null);
-                    setIsCreateModalOpen(true);
-                }}
+                onCreateClick={() => setIsCreateModalOpen(true)}
             />
 
             {aUnInventaireEnCours && (
@@ -177,12 +176,6 @@ export default function InventairesPageClient() {
                 produits={produits}
                 onSubmit={handleCreateInventaire}
             />
-
-            {createError && (
-                <div className="fixed bottom-6 right-6 max-w-sm rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-lg">
-                    {createError}
-                </div>
-            )}
         </div>
     );
 }
