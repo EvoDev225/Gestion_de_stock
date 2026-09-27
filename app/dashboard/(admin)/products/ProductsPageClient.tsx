@@ -209,6 +209,7 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
         } catch (error) {
             console.error(error);
             setVariantes([]);
+            toast.error("Impossible de charger les variantes.");
         }
     };
 
