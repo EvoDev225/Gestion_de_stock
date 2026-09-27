@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { toast } from "sonner";
 import StockPageHeader from "@/components/stock/StockPageHeader";
 import StockTabs from "@/components/stock/StockTabs";
 import LotsToolbar from "@/components/stock/LotsToolbar";
@@ -49,6 +50,7 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
             setLots(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les lots.");
         } finally {
             setIsLoadingLots(false);
         }
@@ -63,6 +65,7 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
             setMouvements(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les mouvements.");
         } finally {
             setIsLoadingMouvements(false);
         }
@@ -76,6 +79,7 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
             setProduits(data);
         } catch (error) {
             console.error(error);
+            toast.error("Impossible de charger les produits.");
         }
     }, []);
 
@@ -166,10 +170,13 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
 
         if (!res.ok) {
             const errorBody = await res.json().catch(() => ({}));
-            throw new Error(errorBody.error ?? "Erreur lors de l'enregistrement du lot");
+            const message = errorBody.error ?? "Erreur lors de l'enregistrement du lot";
+            toast.error(message);
+            throw new Error(message);
         }
 
         await fetchLots();
+        toast.success(isEdition ? "Lot modifie avec succes." : "Lot cree avec succes.");
     };
 
     const handleOpenDeleteLot = (lot: Lot) => {
@@ -177,21 +184,23 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
     };
 
     const confirmDeleteLot = async () => {
-    if (!lotASupprimer) return;
+        if (!lotASupprimer) return;
 
-    try {
-        const res = await fetch(`/api/lots/${lotASupprimer.id}`, { method: "DELETE" });
-        if (!res.ok) {
-            const errorBody = await res.json().catch(() => ({}));
-            throw new Error(errorBody.error ?? "Erreur lors de la suppression du lot");
+        try {
+            const res = await fetch(`/api/lots/${lotASupprimer.id}`, { method: "DELETE" });
+            if (!res.ok) {
+                const errorBody = await res.json().catch(() => ({}));
+                throw new Error(errorBody.error ?? "Erreur lors de la suppression du lot");
+            }
+            await fetchLots();
+            toast.success("Lot supprime avec succes.");
+        } catch (error) {
+            console.error(error);
+            toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression du lot.");
+        } finally {
+            setLotASupprimer(null);
         }
-        await fetchLots();
-    } catch (error) {
-        console.error(error);
-    } finally {
-        setLotASupprimer(null);
-    }
-};
+    };
 
     return (
         <div className="flex flex-col gap-6">
