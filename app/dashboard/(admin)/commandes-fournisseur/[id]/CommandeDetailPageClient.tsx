@@ -44,7 +44,6 @@ export default function CommandeDetailPageClient({
     const [ligneASupprimer, setLigneASupprimer] = useState<string | null>(null);
     const [isSuppressionCommandeOuverte, setIsSuppressionCommandeOuverte] = useState(false);
     const [isChangeantStatut, setIsChangeantStatut] = useState(false);
-    const [erreurApi, setErreurApi] = useState<string | null>(null);
     const [isSupprimantLigne, setIsSupprimantLigne] = useState(false);
     const [isSupprimantCommande, setIsSupprimantCommande] = useState(false);
     const [modalReceptionOuvert, setModalReceptionOuvert] = useState(false);
@@ -54,7 +53,6 @@ export default function CommandeDetailPageClient({
 
     const handleAjouterLigne = async (data: NouvelleLigneCommandeData) => {
         setIsSubmittingLigne(true);
-        setErreurApi(null);
         try {
             const res = await fetch(`/api/commandes-fournisseur/${commande.id}/lignes`, {
                 method: "POST",
@@ -71,7 +69,7 @@ export default function CommandeDetailPageClient({
             setModalLigneOuvert(false);
             toast.success("Ligne ajoutee avec succes.");
         } catch (error: any) {
-            setErreurApi(error.message);
+            toast.error(error.message || "Erreur lors de l'ajout de la ligne.");
             throw error;
         } finally {
             setIsSubmittingLigne(false);
@@ -80,7 +78,6 @@ export default function CommandeDetailPageClient({
 
     const handleModifierLigne = async (ligneId: string, data: { quantiteCommande?: number; prixAchatUnitaire?: number }) => {
         setIsModifiantLigneId(ligneId);
-        setErreurApi(null);
         try {
             const res = await fetch(`/api/commandes-fournisseur/${commande.id}/lignes/${ligneId}`, {
                 method: "PATCH",
@@ -96,7 +93,7 @@ export default function CommandeDetailPageClient({
             }));
             toast.success("Ligne modifiee avec succes.");
         } catch (error: any) {
-            setErreurApi(error.message);
+            toast.error(error.message || "Erreur lors de la modification de la ligne.");
         } finally {
             setIsModifiantLigneId(null);
         }
@@ -107,7 +104,6 @@ export default function CommandeDetailPageClient({
     const confirmSupprimerLigne = async () => {
         if (!ligneASupprimer) return;
         setIsSupprimantLigne(true);
-        setErreurApi(null);
         try {
             const res = await fetch(`/api/commandes-fournisseur/${commande.id}/lignes/${ligneASupprimer}`, {
                 method: "DELETE",
@@ -115,7 +111,7 @@ export default function CommandeDetailPageClient({
             if (!res.ok) {
                 const result = await res.json();
                 if (res.status === 400) {
-                    setErreurApi(result.error || result.message || "Impossible de supprimer la dernière ligne.");
+                    toast.error(result.error || result.message || "Impossible de supprimer la dernière ligne.");
                     setLigneASupprimer(null);
                     return;
                 }
@@ -129,7 +125,7 @@ export default function CommandeDetailPageClient({
             setLigneASupprimer(null);
             toast.success("Ligne supprimee avec succes.");
         } catch (error: any) {
-            setErreurApi(error.message);
+            toast.error(error.message || "Erreur lors de la suppression de la ligne.");
             setLigneASupprimer(null);
         } finally {
             setIsSupprimantLigne(false);
@@ -138,7 +134,6 @@ export default function CommandeDetailPageClient({
 
     const handleChangerStatut = async (nouveauStatut: "EN_ATTENTE" | "ENVOYEE") => {
         setIsChangeantStatut(true);
-        setErreurApi(null);
         try {
             const res = await fetch(`/api/commandes-fournisseur/${commande.id}`, {
                 method: "PATCH",
@@ -155,7 +150,7 @@ export default function CommandeDetailPageClient({
                     : "Statut mis a jour."
             );
         } catch (error: any) {
-            setErreurApi(error.message);
+            toast.error(error.message || "Erreur lors du changement de statut.");
         } finally {
             setIsChangeantStatut(false);
         }
@@ -164,7 +159,6 @@ export default function CommandeDetailPageClient({
     const handleReceptionner = async (
         lignes: { ligneCommandeFournisseurId: string; quantiteRecue: number }[]
     ) => {
-        setErreurApi(null);
         const res = await fetch("/api/receptions-fournisseur", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -172,8 +166,9 @@ export default function CommandeDetailPageClient({
         });
         const result = await res.json();
         if (!res.ok) {
-            setErreurApi(result.error || result.message || "Erreur lors de la reception.");
-            throw new Error(result.error);
+            const message = result.error || result.message || "Erreur lors de la reception.";
+            toast.error(message);
+            throw new Error(message);
         }
         toast.success("Reception enregistree avec succes.");
         router.refresh();
@@ -181,7 +176,6 @@ export default function CommandeDetailPageClient({
 
     const confirmSupprimerCommande = async () => {
         setIsSupprimantCommande(true);
-        setErreurApi(null);
         try {
             const res = await fetch(`/api/commandes-fournisseur/${commande.id}`, { method: "DELETE" });
             if (!res.ok) {
@@ -191,7 +185,7 @@ export default function CommandeDetailPageClient({
             toast.success("Commande supprimee avec succes.");
             router.push("/dashboard/commandes-fournisseur");
         } catch (error: any) {
-            setErreurApi(error.message);
+            toast.error(error.message || "Erreur lors de la suppression de la commande.");
             setIsSuppressionCommandeOuverte(false);
         } finally {
             setIsSupprimantCommande(false);
@@ -207,12 +201,6 @@ export default function CommandeDetailPageClient({
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                 Retour aux commandes
             </Link>
-
-            {erreurApi && (
-                <div className="rounded-lg bg-destructive/10 p-4 border border-destructive/20">
-                    <p className="text-sm font-medium text-destructive">{erreurApi}</p>
-                </div>
-            )}
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
