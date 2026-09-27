@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import type { CommandeFournisseur, NouvelleLigneCommandeData, Produit } from "@/types/commande-fournisseur";
 import LignesCommandeTable from "@/components/admin/commandes-fournisseur/LignesCommandeTable";
 import AjouterLigneModal from "@/components/admin/commandes-fournisseur/AjouterLigneModal";
@@ -68,6 +69,7 @@ export default function CommandeDetailPageClient({
                 ligneCommandeFournisseur: [...prev.ligneCommandeFournisseur, result],
             }));
             setModalLigneOuvert(false);
+            toast.success("Ligne ajoutee avec succes.");
         } catch (error: any) {
             setErreurApi(error.message);
             throw error;
@@ -92,6 +94,7 @@ export default function CommandeDetailPageClient({
                 ...prev,
                 ligneCommandeFournisseur: prev.ligneCommandeFournisseur.map((l) => (l.id === ligneId ? result : l)),
             }));
+            toast.success("Ligne modifiee avec succes.");
         } catch (error: any) {
             setErreurApi(error.message);
         } finally {
@@ -124,6 +127,7 @@ export default function CommandeDetailPageClient({
                 ligneCommandeFournisseur: prev.ligneCommandeFournisseur.filter((l) => l.id !== ligneASupprimer),
             }));
             setLigneASupprimer(null);
+            toast.success("Ligne supprimee avec succes.");
         } catch (error: any) {
             setErreurApi(error.message);
             setLigneASupprimer(null);
@@ -145,6 +149,11 @@ export default function CommandeDetailPageClient({
             if (!res.ok) throw new Error(result.error || result.message || "Erreur lors du changement de statut.");
 
             setCommande((prev) => ({ ...prev, statut: nouveauStatut }));
+            toast.success(
+                nouveauStatut === "ENVOYEE" 
+                    ? "Commande envoyee au fournisseur." 
+                    : "Statut mis a jour."
+            );
         } catch (error: any) {
             setErreurApi(error.message);
         } finally {
@@ -166,6 +175,7 @@ export default function CommandeDetailPageClient({
             setErreurApi(result.error || result.message || "Erreur lors de la reception.");
             throw new Error(result.error);
         }
+        toast.success("Reception enregistree avec succes.");
         router.refresh();
     };
 
@@ -178,6 +188,7 @@ export default function CommandeDetailPageClient({
                 const result = await res.json();
                 throw new Error(result.error || result.message || "Erreur lors de la suppression de la commande.");
             }
+            toast.success("Commande supprimee avec succes.");
             router.push("/dashboard/commandes-fournisseur");
         } catch (error: any) {
             setErreurApi(error.message);
