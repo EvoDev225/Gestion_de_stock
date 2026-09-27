@@ -22,7 +22,6 @@ export function ClientFormModal({
     const [email, setEmail] = useState('');
     const [adresse, setAdresse] = useState('');
     const [errors, setErrors] = useState<{ nom?: string; telephone?: string }>({});
-    const [apiError, setApiError] = useState<string>('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Réinitialiser le formulaire quand clientAModifier change
@@ -39,7 +38,6 @@ export function ClientFormModal({
             setAdresse('');
         }
         setErrors({});
-        setApiError('');
     }, [clientAModifier, isOpen]);
 
     const validate = (): boolean => {
@@ -61,7 +59,6 @@ export function ClientFormModal({
         if (!validate()) return;
 
         setIsSubmitting(true);
-        setApiError('');
 
         try {
             const payload = {
@@ -93,7 +90,7 @@ export function ClientFormModal({
             toast.success(clientAModifier ? "Client modifié avec succès." : "Client créé avec succès.");
             onClose();
         } catch (error) {
-            setApiError(error instanceof Error ? error.message : 'Erreur inconnue');
+            toast.error(error instanceof Error ? error.message : 'Erreur inconnue');
         } finally {
             setIsSubmitting(false);
         }
@@ -133,13 +130,6 @@ export function ClientFormModal({
 
                         {/* Contenu */}
                         <div className="p-6 space-y-4">
-                            {/* Erreur API */}
-                            {apiError && (
-                                <div className="p-3 rounded-md bg-destructive/10 text-destructive text-sm">
-                                    {apiError}
-                                </div>
-                            )}
-
                             {/* Nom */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-foreground">

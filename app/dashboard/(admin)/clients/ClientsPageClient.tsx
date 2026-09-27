@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 import { Plus, Search } from "lucide-react";
-import {ClientsTable} from "@/components/admin/clients/ClientsTable";
-import {ClientFormModal} from "@/components/admin/clients/ClientFormModal";
-import {ClientCard} from "@/components/admin/clients/ClientCard";
+import { toast } from "sonner";
+import { ClientsTable } from "@/components/admin/clients/ClientsTable";
+import { ClientFormModal } from "@/components/admin/clients/ClientFormModal";
+import { ClientCard } from "@/components/admin/clients/ClientCard";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { Client } from "@/types/client";
 
@@ -83,6 +84,7 @@ export default function ClientsPageClient({ clients, role }: ClientsPageClientPr
             }
 
             setListeClients((prev) => prev.filter((c) => c.id !== clientASupprimer.id));
+            toast.success(`${clientASupprimer.nom} a été supprimé avec succès.`);
             setClientASupprimer(null);
         } catch (error) {
             setErreurSuppression("Erreur réseau, veuillez réessayer");
