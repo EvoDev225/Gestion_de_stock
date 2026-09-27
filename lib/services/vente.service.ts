@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { enregistrerActivite } from "./journal-activite.service";
 
-export async function listerVentes() {
+export async function listerVentes(utilisateurId?: string) {
     return prisma.vente.findMany({
+        where: utilisateurId ? { utilisateurId } : undefined,
         include: {
             client: true,
             utilisateur: true,

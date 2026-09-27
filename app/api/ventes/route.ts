@@ -9,7 +9,10 @@ export async function GET(request: NextRequest) {
         return resultatAuth.erreur;
     }
 
-    const ventes = await listerVentes();
+    const filtreUtilisateurId =
+        resultatAuth.session.role === "EMPLOYEE" ? resultatAuth.session.id : undefined;
+
+    const ventes = await listerVentes(filtreUtilisateurId);
     return NextResponse.json(serialiserVentes(ventes));
 }
 
