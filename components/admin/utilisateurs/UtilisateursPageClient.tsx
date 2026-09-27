@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import type { Utilisateur, NouvelUtilisateurData } from "@/types/utilisateur";
 import UtilisateursToolbar from "./UtilisateursToolbar";
 import UtilisateurCard from "./UtilisateurCard";
@@ -24,7 +25,6 @@ export default function UtilisateursPageClient({
     const [filtreRole, setFiltreRole] = useState<RoleFiltre>("TOUS");
     const [modalOuvert, setModalOuvert] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [erreurApi, setErreurApi] = useState<string | null>(null);
 
     const [utilisateurAConfirmer, setUtilisateurAConfirmer] = useState<Utilisateur | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
@@ -36,7 +36,6 @@ export default function UtilisateursPageClient({
 
     const handleCreerUtilisateur = async (data: NouvelUtilisateurData) => {
         setIsSubmitting(true);
-        setErreurApi(null);
 
         try {
             const response = await fetch("/api/utilisateurs", {
@@ -62,8 +61,9 @@ export default function UtilisateursPageClient({
 
             setUtilisateurs((prev) => [nouvelUtilisateur, ...prev]);
             setModalOuvert(false);
+            toast.success("Utilisateur cree avec succes.");
         } catch (error: any) {
-            setErreurApi(error.message || "Erreur lors de la création de l'utilisateur.");
+            toast.error(error.message || "Erreur lors de la création de l'utilisateur.");
         } finally {
             setIsSubmitting(false);
         }
@@ -72,7 +72,6 @@ export default function UtilisateursPageClient({
     const handleConfirmerDesactivation = async () => {
         if (!utilisateurAConfirmer) return;
         setIsConfirming(true);
-        setErreurApi(null);
 
         try {
             const response = await fetch(`/api/utilisateurs/${utilisateurAConfirmer.id}`, {
@@ -88,9 +87,10 @@ export default function UtilisateursPageClient({
             setUtilisateurs((prev) =>
                 prev.map((u) => (u.id === utilisateurAConfirmer.id ? { ...u, actif: false } : u))
             );
+            toast.success("Utilisateur desactive avec succes.");
             setUtilisateurAConfirmer(null);
         } catch (error: any) {
-            setErreurApi(error.message || "Erreur lors de la désactivation.");
+            toast.error(error.message || "Erreur lors de la désactivation.");
         } finally {
             setIsConfirming(false);
         }
@@ -98,12 +98,6 @@ export default function UtilisateursPageClient({
 
     return (
         <div className="space-y-6">
-            {erreurApi && (
-                <div className="rounded-md border border-border bg-card p-4">
-                    <p className="text-sm font-medium text-destructive">{erreurApi}</p>
-                </div>
-            )}
-
             <UtilisateursToolbar
                 filtreRole={filtreRole}
                 onFiltreRoleChange={setFiltreRole}
@@ -151,7 +145,7 @@ export default function UtilisateursPageClient({
                 }
                 confirmLabel="Désactiver"
                 cancelLabel="Annuler"
-                variant="danger "
+                variant="danger"
                 isConfirming={isConfirming}
                 onConfirm={handleConfirmerDesactivation}
                 onCancel={() => setUtilisateurAConfirmer(null)}
