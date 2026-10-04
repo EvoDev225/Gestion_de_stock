@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { obtenirUtilisateurParId, modifierProfil } from "@/lib/services/utilisateur.service";
 import { exigerRole } from "@/lib/auth";
+import { validerCorps } from "@/lib/validation";
+
+const schemaModificationProfil = z
+  .object({
+    nom: z.string().min(1).max(200).optional(),
+    email: z.string().email().max(254).optional(),
+    motDePasseActuel: z.string().min(1).max(200).optional(),
+    nouveauMotDePasse: z.string().min(8).max(200).optional(),
+  })
+  .strip();
 
 export async function GET(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
@@ -18,27 +29,13 @@ export async function PATCH(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const body = await request.json();
+    const validation = await validerCorps(request, schemaModificationProfil);
 
-    const data: {
-        nom?: string;
-        email?: string;
-        motDePasseActuel?: string;
-        nouveauMotDePasse?: string;
-    } = {};
+    if (!validation.succes) {
+        return validation.erreur;
+    }
 
-    if (typeof body.nom === "string") {
-        data.nom = body.nom;
-    }
-    if (typeof body.email === "string") {
-        data.email = body.email;
-    }
-    if (typeof body.motDePasseActuel === "string") {
-        data.motDePasseActuel = body.motDePasseActuel;
-    }
-    if (typeof body.nouveauMotDePasse === "string") {
-        data.nouveauMotDePasse = body.nouveauMotDePasse;
-    }
+    const data = validation.donnees;
 
     try {
         const utilisateur = await modifierProfil(acces.session.id, data);
