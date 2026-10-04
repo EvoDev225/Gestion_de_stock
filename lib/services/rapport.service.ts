@@ -2,7 +2,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '../../generated/prisma/client';
 
-
 export interface PeriodeRapport {
     dateDebut: Date;
     dateFin: Date;
@@ -10,7 +9,7 @@ export interface PeriodeRapport {
 
 export interface DonneesActivite {
     ventes: Prisma.VenteGetPayload<{
-        include: { client: true; utilisateur: true };
+        include: { client: true; utilisateur: true; ligneVentes: { include: { produit: true; variante: true } } };
     }>[];
     mouvementsStock: Prisma.MouvementStockGetPayload<{
         include: { produit: true; variante: true; lot: true };
@@ -31,6 +30,11 @@ export interface DonneesActivite {
             };
         };
     }>[];
+}
+
+// Utilitaire pour formater proprement en FCFA (ex: 1 500 000 FCFA)
+function formatFCFA(montant: number): string {
+    return `${Math.round(montant).toLocaleString('fr-FR')} FCFA`;
 }
 
 /**
@@ -70,7 +74,9 @@ export async function determinerPeriode(): Promise<PeriodeRapport> {
     } else {
         dateDebut = new Date();
         dateDebut.setDate(dateDebut.getDate() - 30); // Repli de 30 jours pour le tout premier rapport
+        dateDebut.setHours(0, 0, 0, 0); // Début de journée
     }
+    dateFin.setHours(23, 59, 59, 999); // Fin de journée
 
     return { dateDebut, dateFin };
 }
@@ -82,31 +88,6 @@ export async function collecterActivite(
     dateDebut: Date,
     dateFin: Date
 ): Promise<DonneesActivite> {
-    const whereVente: Prisma.VenteWhereInput = {
-        dateVente: { gte: dateDebut, lte: dateFin },
-    };
-
-    const whereMouvement: Prisma.MouvementStockWhereInput = {
-        dateMouvement: { gte: dateDebut, lte: dateFin },
-    };
-
-    const whereRetour: Prisma.RetourWhereInput = {
-        dateRetour: { gte: dateDebut, lte: dateFin },
-    };
-
-    const whereCommande: Prisma.CommandeFournisseurWhereInput = {
-        dateCommande: { gte: dateDebut, lte: dateFin },
-    };
-
-    const whereReception: Prisma.ReceptionFournisseurWhereInput = {
-        dateReception: { gte: dateDebut, lte: dateFin },
-    };
-
-    const whereInventaire: Prisma.InventaireWhereInput = {
-        statut: 'VALIDE',
-        dateLancement: { gte: dateDebut, lte: dateFin },
-    };
-
     const [
         ventes,
         mouvementsStock,
@@ -116,36 +97,36 @@ export async function collecterActivite(
         inventaires,
     ] = await Promise.all([
         prisma.vente.findMany({
-            where: whereVente,
-            include: { client: true, utilisateur: true },
+            where: { dateVente: { gte: dateDebut, lte: dateFin } },
+            include: { 
+                client: true, 
+                utilisateur: true,
+                ligneVentes: { include: { produit: true, variante: true } } // Ajouté pour le Top Produits
+            },
             orderBy: { dateVente: 'asc' },
         }),
         prisma.mouvementStock.findMany({
-            where: whereMouvement,
+            where: { dateMouvement: { gte: dateDebut, lte: dateFin } },
             include: { produit: true, variante: true, lot: true },
             orderBy: { dateMouvement: 'asc' },
         }),
         prisma.retour.findMany({
-            where: whereRetour,
-            include: {
-                lignesRetour: {
-                    include: { produit: true },
-                },
-            },
+            where: { dateRetour: { gte: dateDebut, lte: dateFin } },
+            include: { lignesRetour: { include: { produit: true } } },
             orderBy: { dateRetour: 'asc' },
         }),
         prisma.commandeFournisseur.findMany({
-            where: whereCommande,
+            where: { dateCommande: { gte: dateDebut, lte: dateFin } },
             include: { fournisseur: true },
             orderBy: { dateCommande: 'asc' },
         }),
         prisma.receptionFournisseur.findMany({
-            where: whereReception,
+            where: { dateReception: { gte: dateDebut, lte: dateFin } },
             include: { commandeFournisseur: true },
             orderBy: { dateReception: 'asc' },
         }),
         prisma.inventaire.findMany({
-            where: whereInventaire,
+            where: { statut: 'VALIDE', dateLancement: { gte: dateDebut, lte: dateFin } },
             include: {
                 lignesInventaire: {
                     where: { ecart: { not: 0 } },
@@ -172,35 +153,40 @@ export async function collecterActivite(
 export function formaterActivitePourPrompt(activite: DonneesActivite): string {
     const sections: string[] = [];
 
-    // Ventes
+    // --- VENTES ---
     if (activite.ventes.length === 0) {
         sections.push('### VENTES\n- Aucune vente enregistrée sur cette période.');
     } else {
-        const totalVentes = activite.ventes.reduce(
-            (acc, v) => acc + v.montantTotal.toNumber(),
-            0
-        );
-        const ventesCredit = activite.ventes.filter(
-            (v) => v.modePaiement === 'CREDIT'
-        );
-        const totalCredit = ventesCredit.reduce(
-            (acc, v) => acc + v.montantTotal.toNumber(),
-            0
-        );
+        const totalVentes = activite.ventes.reduce((acc, v) => acc + v.montantTotal.toNumber(), 0);
+        const ventesCredit = activite.ventes.filter((v) => v.modePaiement === 'CREDIT');
+        const totalCredit = ventesCredit.reduce((acc, v) => acc + v.montantTotal.toNumber(), 0);
+
+        // Calcul du Top 3 des produits vendus
+        const produitsVendus = new Map<string, number>();
+        activite.ventes.forEach((v) => {
+            v.ligneVentes.forEach((l) => {
+                const nom = `${l.produit.nom}${l.variante ? ` (${l.variante.nomVariante})` : ''}`;
+                produitsVendus.set(nom, (produitsVendus.get(nom) || 0) + l.quantite);
+            });
+        });
+        const topProduits = Array.from(produitsVendus.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([nom, qte]) => `  * ${nom} : ${qte} unité(s)`)
+            .join('\n');
 
         sections.push(
             `### VENTES\n` +
             `- Nombre total de ventes : ${activite.ventes.length}\n` +
-            `- Chiffre d'affaires total : ${totalVentes.toFixed(2)} €\n` +
-            `- Ventes à crédit : ${ventesCredit.length} pour un montant total de ${totalCredit.toFixed(2)} €`
+            `- Chiffre d'affaires total : ${formatFCFA(totalVentes)}\n` +
+            `- Ventes à crédit : ${ventesCredit.length} pour un montant total de ${formatFCFA(totalCredit)}\n` +
+            `- Top 3 des produits les plus vendus :\n${topProduits}`
         );
     }
 
-    // Mouvements de stock
+    // --- MOUVEMENTS DE STOCK ---
     if (activite.mouvementsStock.length === 0) {
-        sections.push(
-            '### MOUVEMENTS DE STOCK\n- Aucun mouvement de stock sur cette période.'
-        );
+        sections.push('### MOUVEMENTS DE STOCK\n- Aucun mouvement de stock sur cette période.');
     } else {
         const parType = activite.mouvementsStock.reduce((acc, m) => {
             acc[m.typeMouvement] = (acc[m.typeMouvement] || 0) + m.quantite;
@@ -218,18 +204,12 @@ export function formaterActivitePourPrompt(activite: DonneesActivite): string {
         );
     }
 
-    // Retours
+    // --- RETOURS ---
     if (activite.retours.length === 0) {
-        sections.push(
-            '### RETOURS\n- Aucun retour client ou fournisseur enregistré sur cette période.'
-        );
+        sections.push('### RETOURS\n- Aucun retour client ou fournisseur enregistré sur cette période.');
     } else {
-        const retoursClient = activite.retours.filter(
-            (r) => r.typeRetour === 'CLIENT'
-        );
-        const retoursFournisseur = activite.retours.filter(
-            (r) => r.typeRetour === 'FOURNISSEUR'
-        );
+        const retoursClient = activite.retours.filter((r) => r.typeRetour === 'CLIENT');
+        const retoursFournisseur = activite.retours.filter((r) => r.typeRetour === 'FOURNISSEUR');
 
         sections.push(
             `### RETOURS\n` +
@@ -238,14 +218,9 @@ export function formaterActivitePourPrompt(activite: DonneesActivite): string {
         );
     }
 
-    // Commandes Fournisseurs
-    if (
-        activite.commandesFournisseur.length === 0 &&
-        activite.receptionsFournisseur.length === 0
-    ) {
-        sections.push(
-            '### FOURNISSEURS\n- Aucune commande ni réception enregistrée sur cette période.'
-        );
+    // --- FOURNISSEURS ---
+    if (activite.commandesFournisseur.length === 0 && activite.receptionsFournisseur.length === 0) {
+        sections.push('### FOURNISSEURS\n- Aucune commande ni réception enregistrée sur cette période.');
     } else {
         sections.push(
             `### FOURNISSEURS\n` +
@@ -254,20 +229,13 @@ export function formaterActivitePourPrompt(activite: DonneesActivite): string {
         );
     }
 
-    // Écarts d'inventaire
-    const ecartsGlobal = activite.inventaires.flatMap(
-        (i) => i.lignesInventaire
-    );
+    // --- INVENTAIRES ---
+    const ecartsGlobal = activite.inventaires.flatMap((i) => i.lignesInventaire);
     if (ecartsGlobal.length === 0) {
-        sections.push(
-            '### INVENTAIRES\n- Aucun écart d\'inventaire constaté sur les inventaires validés durant cette période.'
-        );
+        sections.push('### INVENTAIRES\n- Aucun écart d\'inventaire constaté sur les inventaires validés durant cette période.');
     } else {
         const listeEcarts = ecartsGlobal
-            .map(
-                (e) =>
-                    `  * ${e.produit.nom}${e.variante ? ` (${e.variante.nomVariante})` : ''} : Écart de ${e.ecart} unité(s) (Justification: ${e.justification || 'Aucune'})`
-            )
+            .map((e) => `  * ${e.produit.nom}${e.variante ? ` (${e.variante.nomVariante})` : ''} : Écart de ${e.ecart} unité(s) (Justification: ${e.justification || 'Aucune'})`)
             .join('\n');
 
         sections.push(
@@ -292,22 +260,24 @@ export async function genererResumeIA(texteActivite: string): Promise<string> {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
+        // Correction : gemini-3.6-flash n'existe pas. Utilisation de gemini-1.5-flash (rapide et fiable)
+        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-        const prompt = `Tu es un assistant de gestion de stock et de commerce rédigé pour le gérant de l'établissement.
+        const prompt = `Tu es un assistant expert en gestion de stock et en analyse commerciale, rédigé pour le gérant de l'établissement.
 Analyse les données d'activité de la période ci-dessous et rédige un rapport d'activité synthétique, professionnel, concis et structuré en français.
 
 Tes objectifs :
-1. Résumer brièvement les performances de ventes et le volume d'affaires (en précisant les créances/ventes à crédit).
+1. Résumer les performances de ventes et le volume d'affaires (en précisant les créances/ventes à crédit). Mentionne le Top 3 des produits.
 2. Pointer les mouvements de stock marquants (sorties, pertes, ajustements).
 3. Signaler impérativement tout problème majeur : écarts d'inventaires non justifiés, taux de retour élevé, ou pertes anormales.
 4. Résumer l'activité liée aux fournisseurs (commandes et réceptions).
-5. Proposer 1 à 3 recommandations concrètes et concises basées sur ces données.
+5. Proposer 1 à 3 recommandations concrètes et actionnables basées sur ces données.
 
-Consignes de format :
+Consignes de format STRICTES :
 - Utilise un ton professionnel, direct et bienveillant.
-- Sois concis : pas de phrase d'introduction inutile, va droit au but.
+- Sois concis : pas de phrase d'introduction inutile ("Voici le rapport..."), va droit au but.
 - Structure le rapport avec des titres clairs en Markdown (ex: ## Synthèse des ventes, ## Mouvements & Stocks, ## Alertes & Inventaires, ## Recommandations).
+- **Tous les montants doivent être exprimés en FCFA** (ex: 1 500 000 FCFA, et non 1500000 €).
 
 DONNÉES D'ACTIVITÉ :
 ${texteActivite}`;
@@ -315,15 +285,15 @@ ${texteActivite}`;
         const response = await model.generateContent(prompt);
         const texteGenere = response.response.text();
 
-        if (!texteGenere) {
-            throw new Error('Aucun texte retourné par Gemini.');
+        if (!texteGenere || texteGenere.trim().length < 50) {
+            throw new Error('Le texte retourné par Gemini est vide ou trop court.');
         }
 
         return texteGenere;
     } catch (erreur) {
         console.error('[Rapport IA] Échec de la génération par Gemini :', erreur);
         throw new Error('Échec de la génération du rapport par le service IA.');
-    }
+        }
 }
 
 /**
