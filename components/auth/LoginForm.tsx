@@ -110,9 +110,7 @@ export function LoginForm() {
                         >
                             Mot de passe
                         </label>
-                        <a href="#" className="text-sm text-primary hover:underline">
-                            Mot de passe oublié ?
-                        </a>
+                        
                     </div>
                     <div className="relative w-full">
                         <input
