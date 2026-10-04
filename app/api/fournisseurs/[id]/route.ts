@@ -86,16 +86,25 @@ export async function DELETE(
     try {
         await supprimerFournisseur(validationId.donnees);
         return NextResponse.json({ success: true });
-    } catch (error: any) {
-        if (error.code === "P2025") {
+    } catch (error) {
+        const code = (error as { code?: string }).code;
+        const message = error instanceof Error ? error.message : "";
+
+        if (code === "P2025" || message === "Fournisseur introuvable") {
             return NextResponse.json({ error: "Fournisseur introuvable" }, { status: 404 });
         }
-        if (error.code === "P2003") {
+
+        if (code === "P2003" || message.startsWith("Impossible de supprimer ce fournisseur")) {
             return NextResponse.json(
-                { error: "Suppression impossible : ce fournisseur a des commandes liées" },
+                {
+                    error:
+                        message ||
+                        "Suppression impossible : ce fournisseur a des commandes liées",
+                },
                 { status: 409 }
             );
         }
+
         return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }
