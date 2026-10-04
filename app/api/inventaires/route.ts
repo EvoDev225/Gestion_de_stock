@@ -1,7 +1,15 @@
 // app/api/inventaires/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { listerInventaires, lancerInventaire } from "@/lib/services/inventaire.service";
 import { exigerRole } from "@/lib/auth";
+import { validerCorps } from "@/lib/validation";
+
+const schemaLancerInventaire = z
+  .object({
+    produitIds: z.array(z.string().min(1)).min(1, "Au moins un produitId est requis"),
+  })
+  .strip();
 
 export async function GET(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
@@ -10,29 +18,30 @@ export async function GET(request: NextRequest) {
     const inventaires = await listerInventaires();
     return NextResponse.json(inventaires);
 }
+
 export async function POST(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const body = await request.json();
-
-    if (!Array.isArray(body.produitIds) || body.produitIds.length === 0) {
-        return NextResponse.json(
-            { error: "Au moins un produitId est requis" },
-            { status: 400 }
-        );
+    const validation = await validerCorps(request, schemaLancerInventaire);
+    if (!validation.succes) {
+        return validation.erreur;
     }
 
+    const { produitIds } = validation.donnees;
+
     try {
-        // On utilise l'ID de la session, on l'injecte dans le payload final.
         const inventaire = await lancerInventaire({
             utilisateurId: acces.session.id,
-            produitIds: body.produitIds,
+            produitIds,
         });
 
         return NextResponse.json(inventaire, { status: 201 });
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Erreur lors du lancement de l'inventaire";
+        const message =
+            error instanceof Error
+                ? error.message
+                : "Erreur lors du lancement de l'inventaire";
         return NextResponse.json({ error: message }, { status: 409 });
     }
 }
