@@ -4,12 +4,27 @@ import { listerFournisseurs, creerFournisseur } from "@/lib/services/fournisseur
 import { exigerRole } from "@/lib/auth";
 import { validerCorps } from "@/lib/validation";
 
+// Helper pour tolérer null ou chaîne vide et les convertir en undefined
+const champEmailOptionnel = z.preprocess(
+  (valeur) => (valeur === "" || valeur === null ? undefined : valeur),
+  z.string().email("Format d'email invalide").max(254).optional()
+);
+
 const schemaCreationFournisseur = z
   .object({
     nom: z.string().trim().min(1).max(200),
-    email: z.union([z.literal(""), z.string().email().max(254)]).optional(),
+    email: champEmailOptionnel,
     telephone: z.string().trim().min(1).max(50),
     adresse: z.string().trim().min(1).max(500),
+  })
+  .strip();
+
+const schemaModificationFournisseur = z
+  .object({
+    nom: z.string().trim().min(1).max(200).optional(),
+    email: champEmailOptionnel,
+    telephone: z.string().trim().min(1).max(50).optional(),
+    adresse: z.string().trim().min(1).max(500).optional(),
   })
   .strip();
 
