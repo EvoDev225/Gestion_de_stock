@@ -28,11 +28,11 @@ export default function Navbar() {
             </div>
             
             <div className="hidden md:flex items-center gap-8">
-                <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                <a href="#fonctionnalites" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
                     Fonctionnalités
                 </a>
-                <a href="#" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
-                    À propos
+                <a href="#comment-ca-marche" className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
+                    Comment ça marche
                 </a>
             </div>
             

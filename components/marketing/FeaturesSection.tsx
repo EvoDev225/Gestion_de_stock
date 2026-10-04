@@ -60,7 +60,7 @@ const itemVariants: Variants = {
 
 export default function FeaturesSection() {
     return (
-        <section className="w-full py-24 px-6 bg-background overflow-hidden">
+        <section id="fonctionnalites" className="w-full py-24 px-6 bg-background overflow-hidden">
             <div className="max-w-5xl mx-auto flex flex-col items-center">
 
                 {/* En-tête de section */}

@@ -19,38 +19,26 @@ export default function Footer() {
                     {/* Colonne 1 */}
                     <div className="flex flex-col gap-3">
                         <Link
-                            href="#"
+                            href="#fonctionnalites"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                             Fonctionnalités
                         </Link>
                         <Link
-                            href="#"
+                            href="#comment-ca-marche"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
-                            À propos
+                            Comment ça marche
                         </Link>
                     </div>
 
                     {/* Colonne 2 */}
                     <div className="flex flex-col gap-3">
                         <Link
-                            href="#"
+                            href="/login"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
-                            Contact
-                        </Link>
-                        <Link
-                            href="#"
-                            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                            Confidentialité
-                        </Link>
-                        <Link
-                            href="#"
-                            className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                        >
-                            Conditions
+                            Connexion
                         </Link>
                     </div>
 

@@ -47,12 +47,18 @@ export default function HeroSection() {
                 variants={itemVariants}
                 className="mt-10 flex flex-col sm:flex-row items-center gap-4"
             >
-                <button className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-medium shadow-sm transition-transform hover:scale-105">
+                <a
+                    href="#fonctionnalites"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-medium shadow-sm transition-transform hover:scale-105 text-center"
+                >
                     Commencer
-                </button>
-                <button className="w-full sm:w-auto px-8 py-3.5 rounded-full border border-primary text-primary font-medium bg-transparent transition-transform hover:scale-105">
+                </a>
+                <a
+                    href="#comment-ca-marche"
+                    className="w-full sm:w-auto px-8 py-3.5 rounded-full border border-primary text-primary font-medium bg-transparent transition-transform hover:scale-105 text-center"
+                >
                     Voir comment ça marche
-                </button>
+                </a>
             </motion.div>
 
             {/* --- Section Carte Mockup --- */}

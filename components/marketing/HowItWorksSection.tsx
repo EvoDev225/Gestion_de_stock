@@ -56,7 +56,7 @@ const circleVariants: Variants = {
 
 export default function HowItWorksSection() {
   return (
-    <section className="w-full py-24 px-6 border-t border-border bg-background overflow-hidden">
+    <section id="comment-ca-marche"  className="w-full py-24 px-6 border-t border-border bg-background overflow-hidden">
       <div className="max-w-5xl mx-auto flex flex-col items-center">
         
         <h2 className="text-3xl md:text-4xl font-bold text-foreground text-center mb-16">
