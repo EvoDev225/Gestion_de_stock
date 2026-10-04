@@ -1,6 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { exigerRole } from "@/lib/auth";
 import { listerReceptions, creerReception } from "@/lib/services/reception-fournisseur.service";
+import { validerCorps, validerQuery } from "@/lib/validation";
+
+const schemaListeReceptions = z
+  .object({
+    commandeFournisseurId: z.string().min(1).optional(),
+  })
+  .strip();
+
+const schemaCreationReception = z
+  .object({
+    commandeFournisseurId: z.string().min(1),
+    lignes: z
+      .array(
+        z.object({
+          ligneCommandeFournisseurId: z.string().min(1),
+          quantiteRecue: z.coerce.number().int().min(1),
+        })
+      )
+      .min(1, "Au moins une ligne est requise"),
+  })
+  .strip();
 
 export async function GET(request: NextRequest) {
     const resultatAuth = await exigerRole(request, ["ADMIN"]);
@@ -8,7 +30,12 @@ export async function GET(request: NextRequest) {
         return resultatAuth.erreur;
     }
 
-    const commandeFournisseurId = request.nextUrl.searchParams.get("commandeFournisseurId") ?? undefined;
+    const validation = validerQuery(request, schemaListeReceptions);
+    if (!validation.succes) {
+        return validation.erreur;
+    }
+
+    const { commandeFournisseurId } = validation.donnees;
     const receptions = await listerReceptions(commandeFournisseurId);
     return NextResponse.json(receptions);
 }
@@ -19,19 +46,18 @@ export async function POST(request: NextRequest) {
         return resultatAuth.erreur;
     }
 
-    const body = await request.json();
-
-    if (!body.commandeFournisseurId || !Array.isArray(body.lignes) || body.lignes.length === 0) {
-        return NextResponse.json(
-            { error: "commandeFournisseurId et au moins une ligne sont requis" },
-            { status: 400 }
-        );
+    const validation = await validerCorps(request, schemaCreationReception);
+    if (!validation.succes) {
+        return validation.erreur;
     }
+
+    const { commandeFournisseurId, lignes } = validation.donnees;
 
     try {
         const reception = await creerReception({
-            ...body,
+            commandeFournisseurId,
             utilisateurId: resultatAuth.session.id,
+            lignes,
         });
         return NextResponse.json(reception, { status: 201 });
     } catch (error) {
