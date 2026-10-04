@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { ajouterLigneCommande } from "@/lib/services/commande-fournisseur.service";
 import { exigerRole } from "@/lib/auth";
+import { validerCorps, validerParametre } from "@/lib/validation";
+
+const schemaId = z.string().min(1);
+
+const schemaAjoutLigneCommande = z
+  .object({
+    produitId: z.string().min(1),
+    quantiteCommande: z.coerce.number().int().min(1),
+    prixAchatUnitaire: z.coerce.number().int().min(1),
+  })
+  .strip();
 
 export async function POST(
     request: NextRequest,
@@ -9,18 +21,25 @@ export async function POST(
     const acces = await exigerRole(request, ["ADMIN"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const { id } = await params;
-    const body = await request.json();
-
-    if (!body.produitId || !body.quantiteCommande || !body.prixAchatUnitaire) {
-        return NextResponse.json(
-            { error: "produitId, quantiteCommande et prixAchatUnitaire sont requis" },
-            { status: 400 }
-        );
+    const { id: idBrut } = await params;
+    const validationId = validerParametre(idBrut, schemaId);
+    if (!validationId.succes) {
+        return validationId.erreur;
     }
 
+    const validation = await validerCorps(request, schemaAjoutLigneCommande);
+    if (!validation.succes) {
+        return validation.erreur;
+    }
+
+    const { produitId, quantiteCommande, prixAchatUnitaire } = validation.donnees;
+
     try {
-        const ligne = await ajouterLigneCommande(id, body, acces.session.id);
+        const ligne = await ajouterLigneCommande(
+            validationId.donnees,
+            { produitId, quantiteCommande, prixAchatUnitaire },
+            acces.session.id
+        );
         return NextResponse.json(ligne, { status: 201 });
     } catch (error: any) {
         if (error.code === "P2003") {
