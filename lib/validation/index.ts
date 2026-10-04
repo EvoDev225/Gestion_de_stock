@@ -6,8 +6,8 @@ export type ResultatValidation<T> =
     | { succes: false; erreur: NextResponse };
 
 function genererErreur400(message: string, details?: unknown): NextResponse {
-    const corps: { erreur: string; details?: unknown } = {
-        erreur: message,
+    const corps: { error: string; details?: unknown } = {
+        error: message,
     };
 
     if (details !== undefined && process.env.NODE_ENV !== "production") {
