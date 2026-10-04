@@ -4,6 +4,16 @@ import bcrypt from "bcryptjs";
 async function main() {
   console.log("🌱 Démarrage du processus de seed...");
 
+  // 0. Lecture des mots de passe depuis l'environnement (jamais en dur)
+  const motDePasseAdmin = process.env.SEED_ADMIN_PASSWORD;
+  const motDePasseEmploye = process.env.SEED_EMPLOYE_PASSWORD;
+
+  if (!motDePasseAdmin || !motDePasseEmploye) {
+    throw new Error(
+      "SEED_ADMIN_PASSWORD et SEED_EMPLOYE_PASSWORD doivent être définies dans .env"
+    );
+  }
+
   // 1. Vidage dynamique et sécurisé de toutes les tables du schéma public
   console.log("🧹 Troncature de la base de données...");
 
@@ -18,7 +28,7 @@ async function main() {
   if (tablenames.length > 0) {
     // Construction de la liste des tables séparées par des virgules
     const listOfTables = tablenames.map((t) => t.tablename).join(", ");
-    
+
     // Une seule instruction TRUNCATE CASCADE avec RESTART IDENTITY
     await prisma.$executeRawUnsafe(
       `TRUNCATE TABLE ${listOfTables} RESTART IDENTITY CASCADE;`
@@ -31,8 +41,8 @@ async function main() {
 
   // 2. Hashage des mots de passe
   console.log("🔐 Hashage des mots de passe avec bcryptjs...");
-  const defaultPassword = "123456789";
-  const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+  const hashAdmin = await bcrypt.hash(motDePasseAdmin, 10);
+  const hashEmploye = await bcrypt.hash(motDePasseEmploye, 10);
 
   // 3. Création des 2 utilisateurs
   console.log("👤 Création des comptes utilisateurs par défaut...");
@@ -41,7 +51,7 @@ async function main() {
     data: {
       nom: "admin",
       email: "admin@gmail.com",
-      motDePasse: hashedPassword,
+      motDePasse: hashAdmin,
       role: "ADMIN",
     },
   });
@@ -50,7 +60,7 @@ async function main() {
     data: {
       nom: "employe",
       email: "employe@gmail.com",
-      motDePasse: hashedPassword,
+      motDePasse: hashEmploye,
       role: "EMPLOYEE",
     },
   });
