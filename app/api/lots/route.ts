@@ -12,13 +12,18 @@ const schemaListeLots = z
   })
   .strip();
 
+const champCibleOptionnel = z.preprocess(
+  (valeur) => (valeur === "" || valeur === null ? undefined : valeur),
+  z.string().min(1).optional()
+);
+
 const schemaCreationLot = z
   .object({
     dateExpiration: z.coerce.date(),
     quantite: z.coerce.number().min(1),
     dateReception: z.coerce.date(),
-    produitId: z.string().min(1).optional(),
-    varianteId: z.string().min(1).optional(),
+    produitId: champCibleOptionnel,
+    varianteId: champCibleOptionnel,
   })
   .strip();
 
