@@ -47,6 +47,6 @@ next-env.d.ts
 
 .continue/
 
-# Images uploadées (contenu local, jamais versionné)
+# Images uploades (contenu local, jamais versionnï¿½)
 public/uploads/produits/*
 !public/uploads/produits/.gitkeep
