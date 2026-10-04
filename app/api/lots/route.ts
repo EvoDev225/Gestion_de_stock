@@ -1,14 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { listerLots, creerLot } from "@/lib/services/lot.service";
 import { exigerRole } from "@/lib/auth";
+import { validerCorps, validerQuery } from "@/lib/validation";
+
+const schemaListeLots = z
+  .object({
+    produitId: z.string().min(1).optional(),
+    varianteId: z.string().min(1).optional(),
+    commandeFournisseurId: z.string().min(1).optional(),
+  })
+  .strip();
+
+const schemaCreationLot = z
+  .object({
+    dateExpiration: z.coerce.date(),
+    quantite: z.coerce.number().min(1),
+    dateReception: z.coerce.date(),
+    produitId: z.string().min(1).optional(),
+    varianteId: z.string().min(1).optional(),
+  })
+  .strip();
 
 export async function GET(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const produitId = request.nextUrl.searchParams.get("produitId") ?? undefined;
-    const varianteId = request.nextUrl.searchParams.get("varianteId") ?? undefined;
-    const commandeFournisseurId = request.nextUrl.searchParams.get("commandeFournisseurId") ?? undefined;
+    const validation = validerQuery(request, schemaListeLots);
+    if (!validation.succes) {
+        return validation.erreur;
+    }
+
+    const { produitId, varianteId, commandeFournisseurId } = validation.donnees;
     const lots = await listerLots(produitId, varianteId, commandeFournisseurId);
     return NextResponse.json(lots);
 }
@@ -17,20 +40,21 @@ export async function POST(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const body = await request.json();
-
-    if (!body.dateExpiration || body.quantite === undefined || !body.dateReception) {
-        return NextResponse.json(
-            { error: "dateExpiration, quantite et dateReception sont requis" },
-            { status: 400 }
-        );
+    const validation = await validerCorps(request, schemaCreationLot);
+    if (!validation.succes) {
+        return validation.erreur;
     }
+
+    const { dateExpiration, quantite, dateReception, produitId, varianteId } =
+        validation.donnees;
 
     try {
         const lot = await creerLot({
-            ...body,
-            dateExpiration: new Date(body.dateExpiration),
-            dateReception: new Date(body.dateReception),
+            dateExpiration,
+            quantite,
+            dateReception,
+            produitId,
+            varianteId,
         });
         return NextResponse.json(lot, { status: 201 });
     } catch (error) {
