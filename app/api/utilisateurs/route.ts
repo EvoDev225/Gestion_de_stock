@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { listerUtilisateurs, creerUtilisateur } from "@/lib/services/utilisateur.service";
 import { exigerRole } from "@/lib/auth";
+import { validerCorps } from "@/lib/validation";
+
+const schemaCreationUtilisateur = z
+  .object({
+    nom: z.string().min(1).max(200),
+    email: z.string().email().max(254),
+    motDePasse: z.string().min(8).max(200),
+    role: z.enum(["ADMIN", "EMPLOYEE"]).optional(),
+  })
+  .strip();
 
 export async function GET(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN"]);
@@ -14,18 +25,21 @@ export async function POST(request: NextRequest) {
     const acces = await exigerRole(request, ["ADMIN"]);
     if ("erreur" in acces) return acces.erreur;
 
-    const body = await request.json();
+    const validation = await validerCorps(request, schemaCreationUtilisateur);
 
-    if (!body.nom || !body.email || !body.motDePasse) {
-        return NextResponse.json(
-            { error: "nom, email et motDePasse sont requis" },
-            { status: 400 }
-        );
+    if (!validation.succes) {
+        return validation.erreur;
     }
 
+    const { nom, email, motDePasse, role } = validation.donnees;
+
     const utilisateur = await creerUtilisateur({
-        ...body,
+        nom,
+        email,
+        motDePasse,
+        role,
         utilisateurCreateurId: acces.session.id,
     });
+
     return NextResponse.json(utilisateur, { status: 201 });
 }
