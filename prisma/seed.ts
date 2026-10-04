@@ -20,9 +20,9 @@ async function main() {
   // Sélectionne et formate chaque nom de table avec quote_ident pour éviter les injections SQL
   const tablenames = await prisma.$queryRawUnsafe<{ tablename: string }[]>(
     `SELECT quote_ident(tablename) as tablename
-     FROM pg_tables
-     WHERE schemaname = 'public'
-       AND tablename != '_prisma_migrations';`
+      FROM pg_tables
+      WHERE schemaname = 'public'
+      AND tablename != '_prisma_migrations';`
   );
 
   if (tablenames.length > 0) {
