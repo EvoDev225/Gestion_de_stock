@@ -63,7 +63,26 @@ export async function PATCH(
     }
 
     const data = validation.donnees;
+    const id = validationId.donnees;
 
-    const utilisateur = await modifierUtilisateur(validationId.donnees, data);
-    return NextResponse.json(utilisateur);
+    try {
+        let utilisateur;
+        
+        // Si on change le statut actif, on utilise la fonction dédiée
+        if (data.actif === false) {
+            utilisateur = await desactiverUtilisateur(id, acces.session.id);
+        } else {
+            // Sinon, modification classique (sans actif)
+            const { actif, ...autresDonnees } = data;
+            utilisateur = await modifierUtilisateur(id, autresDonnees);
+        }
+        
+        return NextResponse.json(utilisateur);
+    } catch (error) {
+        console.error("Erreur modification utilisateur:", error);
+        return NextResponse.json(
+            { error: error instanceof Error ? error.message : "Erreur lors de la modification" },
+            { status: 500 }
+        );
+    }
 }

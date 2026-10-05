@@ -34,6 +34,7 @@ export async function creerUtilisateur(data: {
                 email: data.email,
                 role: data.role,
                 motDePasse: motDePasseHash,
+                actif:true
             },
             select: { id: true, nom: true, email: true, role: true, actif: true },
         });
@@ -52,7 +53,7 @@ export async function creerUtilisateur(data: {
 
 export async function modifierUtilisateur(
     id: string,
-    data: { nom?: string; email?: string; role?: "ADMIN" | "EMPLOYEE" }
+    data: { nom?: string; email?: string; role?: "ADMIN" | "EMPLOYEE";actif?: boolean }
 ) {
     return prisma.utilisateur.update({
         where: { id },
