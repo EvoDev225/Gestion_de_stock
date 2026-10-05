@@ -5,7 +5,6 @@ import Footer from "@/components/marketing/Footer";
 export default function PolitiqueConfidentialitePage() {
   return (
     <main className="bg-background min-h-screen flex flex-col">
-      <Navbar />
       
       <div className="flex-grow max-w-4xl mx-auto px-6 py-32">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-8 tracking-tight">
@@ -88,7 +87,6 @@ export default function PolitiqueConfidentialitePage() {
         </div>
       </div>
 
-      <Footer />
     </main>
   );
 }
