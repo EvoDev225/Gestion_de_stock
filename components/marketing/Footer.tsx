@@ -9,14 +9,14 @@ export default function Footer() {
                 <div className="flex flex-col gap-2">
                     <span className="font-bold text-lg text-foreground">CorticalEvo</span>
                     <p className="text-sm text-muted-foreground">
-                        © 2026 CorticalEvo. Tous droits réservés.
+                        © {new Date().getFullYear()} CorticalEvo. Tous droits réservés.
                     </p>
                 </div>
 
                 {/* Bloc droit : Liens */}
                 <div className="flex gap-12">
 
-                    {/* Colonne 1 */}
+                    {/* Colonne 1 : Navigation */}
                     <div className="flex flex-col gap-3">
                         <Link
                             href="#fonctionnalites"
@@ -32,13 +32,19 @@ export default function Footer() {
                         </Link>
                     </div>
 
-                    {/* Colonne 2 */}
+                    {/* Colonne 2 : Légal */}
                     <div className="flex flex-col gap-3">
                         <Link
                             href="/login"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                             Connexion
+                        </Link>
+                        <Link
+                            href="/politique-confidentialite"
+                            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            Politique de confidentialité
                         </Link>
                     </div>
 
