@@ -21,7 +21,7 @@ export default function Navbar() {
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-7xl flex items-center justify-between px-6 py-3 rounded-full bg-background/70 backdrop-blur-xl border border-border ambient-shadow"
         >
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
                 <a href="#" className="text-xl font-bold text-primary">
                     CorticalEvo
                 </a>

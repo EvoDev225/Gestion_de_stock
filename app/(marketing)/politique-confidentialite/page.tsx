@@ -73,6 +73,7 @@ export default function PolitiqueConfidentialitePage() {
             </h2>
             <p className="mb-6">
               Pour toute question relative à cette politique, vous pouvez nous contacter via l'adresse e-mail de l'administrateur de l'application.
+              
             </p>
           </section>
         </div>

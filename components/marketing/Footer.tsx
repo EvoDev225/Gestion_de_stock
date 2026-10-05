@@ -30,22 +30,29 @@ export default function Footer() {
                         >
                             Comment ça marche
                         </Link>
-                    </div>
-
-                    {/* Colonne 2 : Légal */}
-                    <div className="flex flex-col gap-3">
                         <Link
                             href="/login"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                             Connexion
                         </Link>
+                    </div>
+
+                    {/* Colonne 2 : Contact & Légal */}
+                    <div className="flex flex-col gap-3">
+                        <a
+                            href="mailto:ozielkambou602@gmail.com"
+                            className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                        >
+                            Contact
+                        </a>
                         <Link
                             href="/politique-confidentialite"
                             className="text-sm text-muted-foreground hover:text-primary transition-colors"
                         >
                             Politique de confidentialité
                         </Link>
+                       
                     </div>
 
                 </div>
