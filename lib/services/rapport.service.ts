@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '../../generated/prisma/client';
-
+import OpenAI from "openai";
 export interface PeriodeRapport {
     dateDebut: Date;
     dateFin: Date;
@@ -252,18 +252,21 @@ export function formaterActivitePourPrompt(activite: DonneesActivite): string {
  * 5. Appelle l'API Gemini pour générer le résumé synthétique
  */
 export async function genererResumeIA(texteActivite: string): Promise<string> {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error('[Rapport IA] Erreur : Clé GEMINI_API_KEY non configurée.');
-        throw new Error('La clé d\'API Gemini est absente du serveur.');
+    const apiKey = process.env.AI_API_KEY;
+    const baseUrl = process.env.AI_BASE_URL;
+    const model = process.env.AI_MODEL;
+
+    if (!apiKey || !baseUrl || !model) {
+        throw new Error("Configuration IA incomplète dans le .env (AI_API_KEY, AI_BASE_URL, AI_MODEL)");
     }
 
-    try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        // Correction : gemini-3.6-flash n'existe pas. Utilisation de gemini-1.5-flash (rapide et fiable)
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Initialisation du client OpenAI (compatible Groq, Mistral, etc.)
+    const client = new OpenAI({
+        apiKey: apiKey,
+        baseURL: baseUrl,
+    });
 
-        const prompt = `Tu es un assistant expert en gestion de stock et en analyse commerciale, rédigé pour le gérant de l'établissement.
+    const prompt = `Tu es un assistant expert en gestion de stock et en analyse commerciale, rédigé pour le gérant de l'établissement.
 Analyse les données d'activité de la période ci-dessous et rédige un rapport d'activité synthétique, professionnel, concis et structuré en français.
 
 Tes objectifs :
@@ -282,18 +285,40 @@ Consignes de format STRICTES :
 DONNÉES D'ACTIVITÉ :
 ${texteActivite}`;
 
-        const response = await model.generateContent(prompt);
-        const texteGenere = response.response.text();
+    try {
+        const response = await client.chat.completions.create({
+            model: model,
+            messages: [
+                {
+                    role: "system",
+                    content: "Tu es un expert en analyse commerciale. Réponds toujours en français."
+                },
+                {
+                    role: "user",
+                    content: prompt
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 1500,
+        });
+
+        const texteGenere = response.choices[0]?.message?.content;
 
         if (!texteGenere || texteGenere.trim().length < 50) {
-            throw new Error('Le texte retourné par Gemini est vide ou trop court.');
+            throw new Error("Le texte retourné par l'IA est vide ou trop court.");
         }
 
         return texteGenere;
     } catch (erreur) {
-        console.error('[Rapport IA] Échec de la génération par Gemini :', erreur);
-        throw new Error('Échec de la génération du rapport par le service IA.');
-        }
+        console.error("[Rapport IA] Échec de la génération :", erreur);
+        const messageReel = erreur instanceof Error ? erreur.message : "Erreur inconnue";
+        
+        throw new Error(
+            process.env.NODE_ENV === "production"
+                ? "Échec de la génération du rapport par le service IA."
+                : `Échec de la génération du rapport : ${messageReel}`
+        );
+    }
 }
 
 /**
