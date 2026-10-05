@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client"; // Import nécessaire pour le type TransactionClient
 import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerCommandesFournisseur() {
@@ -61,9 +62,9 @@ export async function creerCommandeFournisseur(data: {
                 },
             },
             include: {
-        fournisseur: true,
-        ligneCommandeFournisseur: { include: { produit: true } },
-    },
+                fournisseur: true,
+                ligneCommandeFournisseur: { include: { produit: true } },
+            },
         });
 
         await enregistrerActivite({
@@ -104,7 +105,9 @@ export async function changerStatutCommande(
         return commande;
     });
 }
-async function verifierModifiable(tx: typeof prisma, commandeId: string) {
+
+// ✅ CORRECTION ICI : Le type est maintenant Prisma.TransactionClient
+async function verifierModifiable(tx: Prisma.TransactionClient, commandeId: string) {
     const commande = await tx.commandeFournisseur.findUnique({
         where: { id: commandeId },
     });
@@ -138,8 +141,8 @@ export async function ajouterLigneCommande(
                 produitId: data.produitId,
                 quantiteCommande: data.quantiteCommande,
                 prixAchatUnitaire: data.prixAchatUnitaire,
-                include: { produit: true },
             },
+            include: { produit: true },
         });
 
         await enregistrerActivite({

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import StockPageHeader from "@/components/stock/StockPageHeader";
 import StockTabs from "@/components/stock/StockTabs";
 import LotsToolbar from "@/components/stock/LotsToolbar";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog"; // <-- CHEMIN CORRIGÉ ICI
 import LotsTable from "@/components/stock/LotsTable";
 import LotCard from "@/components/stock/LotCard";
 import LotFormModal from "@/components/stock/LotFormModal";
@@ -32,7 +32,7 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
     const [searchValue, setSearchValue] = useState("");
     const [expirationFilter, setExpirationFilter] = useState<"tous" | "bientot" | "expires">("tous");
 
-    // ── Pagination (indépendante par onglet) ──
+    // ── Pagination ──
     const [lotsPage, setLotsPage] = useState(1);
     const [mouvementsPage, setMouvementsPage] = useState(1);
 
@@ -40,9 +40,9 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
     const [isLotModalOpen, setIsLotModalOpen] = useState(false);
     const [lotEnEdition, setLotEnEdition] = useState<Lot | null>(null);
     const [lotASupprimer, setLotASupprimer] = useState<Lot | null>(null);
+
     // ── Chargement ──
     const fetchLots = useCallback(async () => {
-        setIsLoadingLots(true);
         try {
             const res = await fetch("/api/lots");
             if (!res.ok) throw new Error("Erreur lors du chargement des lots");
@@ -51,13 +51,10 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
         } catch (error) {
             console.error(error);
             toast.error("Impossible de charger les lots.");
-        } finally {
-            setIsLoadingLots(false);
         }
     }, []);
 
     const fetchMouvements = useCallback(async () => {
-        setIsLoadingMouvements(true);
         try {
             const res = await fetch("/api/mouvements-stock");
             if (!res.ok) throw new Error("Erreur lors du chargement des mouvements");
@@ -66,8 +63,6 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
         } catch (error) {
             console.error(error);
             toast.error("Impossible de charger les mouvements.");
-        } finally {
-            setIsLoadingMouvements(false);
         }
     }, []);
 
@@ -84,9 +79,17 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
     }, []);
 
     useEffect(() => {
-        fetchLots();
-        fetchMouvements();
-        fetchProduits();
+        const loadData = async () => {
+            setIsLoadingLots(true);
+            setIsLoadingMouvements(true);
+            
+            await Promise.all([
+                fetchLots().finally(() => setIsLoadingLots(false)),
+                fetchMouvements().finally(() => setIsLoadingMouvements(false)),
+                fetchProduits()
+            ]);
+        };
+        loadData();
     }, [fetchLots, fetchMouvements, fetchProduits]);
 
     // ── Filtrage des lots ──
@@ -122,9 +125,16 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
         });
     }, [lots, searchValue, expirationFilter]);
 
-    useEffect(() => {
-        setLotsPage(1);
-    }, [searchValue, expirationFilter]);
+    // ── Handlers pour réinitialiser la pagination SANS useEffect (CORRECTION REACT) ──
+    const handleSearchChange = (value: string) => {
+        setSearchValue(value);
+        setLotsPage(1); // Réinitialise la page au moment du changement
+    };
+
+    const handleExpirationChange = (value: "tous" | "bientot" | "expires") => {
+        setExpirationFilter(value);
+        setLotsPage(1); // Réinitialise la page au moment du changement
+    };
 
     const totalLotsPages = Math.max(1, Math.ceil(lotsFiltres.length / ITEMS_PER_PAGE));
     const lotsPagePagines = useMemo(() => {
@@ -132,7 +142,6 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
         return lotsFiltres.slice(start, start + ITEMS_PER_PAGE);
     }, [lotsFiltres, lotsPage]);
 
-    // ── Pagination mouvements (pas de filtre pour l'instant, liste brute) ──
     const totalMouvementsPages = Math.max(1, Math.ceil(mouvements.length / ITEMS_PER_PAGE));
     const mouvementsPagines = useMemo(() => {
         const start = (mouvementsPage - 1) * ITEMS_PER_PAGE;
@@ -151,33 +160,33 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
     };
 
     const handleSubmitLot = async (data: {
-        numeroLot: string;
-        quantite: number;
-        dateReception: string;
-        dateExpiration: string;
-        produitId: string | null;
-        varianteId: string | null;
-    }) => {
-        const isEdition = lotEnEdition !== null;
-        const url = isEdition ? `/api/lots/${lotEnEdition!.id}` : "/api/lots";
-        const method = isEdition ? "PATCH" : "POST";
+    numeroLot?: string; // <-- AJOUTE CE POINT D'INTERROGATION ICI
+    quantite: number;
+    dateReception: string;
+    dateExpiration: string;
+    produitId: string | null;
+    varianteId: string | null;
+}) => {
+    const isEdition = lotEnEdition !== null;
+    const url = isEdition ? `/api/lots/${lotEnEdition!.id}` : "/api/lots";
+    const method = isEdition ? "PATCH" : "POST";
 
-        const res = await fetch(url, {
-            method,
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
+    const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+    });
 
-        if (!res.ok) {
-            const errorBody = await res.json().catch(() => ({}));
-            const message = errorBody.error ?? "Erreur lors de l'enregistrement du lot";
-            toast.error(message);
-            throw new Error(message);
-        }
+    if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        const message = errorBody.error ?? "Erreur lors de l'enregistrement du lot";
+        toast.error(message);
+        throw new Error(message);
+    }
 
-        await fetchLots();
-        toast.success(isEdition ? "Lot modifie avec succes." : "Lot cree avec succes.");
-    };
+    await fetchLots();
+    toast.success(isEdition ? "Lot modifié avec succès." : "Lot créé avec succès.");
+};
 
     const handleOpenDeleteLot = (lot: Lot) => {
         setLotASupprimer(lot);
@@ -193,7 +202,7 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
                 throw new Error(errorBody.error ?? "Erreur lors de la suppression du lot");
             }
             await fetchLots();
-            toast.success("Lot supprime avec succes.");
+            toast.success("Lot supprimé avec succès.");
         } catch (error) {
             console.error(error);
             toast.error(error instanceof Error ? error.message : "Erreur lors de la suppression du lot.");
@@ -217,9 +226,9 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
                 <>
                     <LotsToolbar
                         searchValue={searchValue}
-                        onSearchChange={setSearchValue}
+                        onSearchChange={handleSearchChange} // <-- Utilise le handler corrigé
                         expirationFilter={expirationFilter}
-                        onExpirationFilterChange={setExpirationFilter}
+                        onExpirationFilterChange={handleExpirationChange} // <-- Utilise le handler corrigé
                     />
 
                     {isLoadingLots ? (
@@ -298,14 +307,17 @@ export default function StockPageClient({ role = "ADMIN" }: { role?: "ADMIN" | "
                     )}
                 </>
             )}
+            
             <ConfirmDialog
                 isOpen={lotASupprimer !== null}
-                title="Supprimer ce lot ?"
-                message={`Le lot "${lotASupprimer?.numeroLot}" sera supprimé définitivement. Cette action est irréversible.`}
-                confirmLabel="Supprimer"
+                onClose={() => setLotASupprimer(null)}
                 onConfirm={confirmDeleteLot}
-                onCancel={() => setLotASupprimer(null)}
+                title="Supprimer ce lot ?"
+                description={`Le lot "${lotASupprimer?.numeroLot}" sera supprimé définitivement. Cette action est irréversible.`}
+                variant="danger"
+                confirmLabel="Supprimer"
             />
+            
             <LotFormModal
                 key={lotEnEdition?.id ?? "nouveau-lot"}
                 isOpen={isLotModalOpen}

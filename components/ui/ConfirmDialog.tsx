@@ -4,46 +4,46 @@ import { useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmDialogProps {
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmLabel?: string;
-    cancelLabel?: string;
-    variant?: "danger" | "default";
-    isConfirming?: boolean;
-    onConfirm: () => void;
-    onCancel: () => void;
-    erreur?: string | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void | Promise<void>;
+  title: string;
+  description: string;
+  variant?: "danger" | "default";
+  isConfirming?: boolean;
+  cancelLabel?: string;
+  confirmLabel?: string;
+  erreur?: string;
 }
 
 export default function ConfirmDialog({
     isOpen,
+    onClose,
+    onConfirm,
     title,
-    message,
-    confirmLabel = "Confirmer",
-    cancelLabel = "Annuler",
+    description,
     variant = "danger",
     isConfirming = false,
-    onConfirm,
-    onCancel,
+    cancelLabel = "Annuler",
+    confirmLabel = "Confirmer",
     erreur,
 }: ConfirmDialogProps) {
     // Fermeture avec la touche Escape
     useEffect(() => {
         if (!isOpen) return;
         function handleKeyDown(e: KeyboardEvent) {
-            if (e.key === "Escape") onCancel();
+            if (e.key === "Escape") onClose();
         }
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isOpen, onCancel]);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
     return (
         <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
-            onClick={onCancel}
+            onClick={onClose}
             role="dialog"
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
@@ -62,14 +62,14 @@ export default function ConfirmDialog({
                         <h2 id="confirm-dialog-title" className="text-sm font-semibold text-foreground">
                             {title}
                         </h2>
-                        <p className="mt-1 text-sm text-muted-foreground">{message}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
                         {erreur && (
                             <p className="mt-2 text-sm text-destructive">{erreur}</p>
                         )}
                     </div>
                     <button
                         type="button"
-                        onClick={onCancel}
+                        onClick={onClose}
                         className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label="Fermer"
                     >
@@ -80,7 +80,7 @@ export default function ConfirmDialog({
                 <div className="mt-6 flex justify-end gap-2">
                     <button
                         type="button"
-                        onClick={onCancel}
+                        onClick={onClose}
                         className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
                     >
                         {cancelLabel}
@@ -95,7 +95,7 @@ export default function ConfirmDialog({
                                 : "rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
                         }
                     >
-                        {confirmLabel}
+                        {isConfirming ? "En cours..." : confirmLabel}
                     </button>
                 </div>
             </div>

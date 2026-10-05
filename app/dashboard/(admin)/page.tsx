@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import StatsCards from "@/components/admin/dashboard/StatsCards";
 import SalesChart from "@/components/admin/dashboard/SalesChart";
 import PendingActions from "@/components/admin/dashboard/PendingActions";
+export const dynamic = "force-dynamic";
 
 interface StatistiquesDashboard {
     produitsEnStock: number;

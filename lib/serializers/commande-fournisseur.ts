@@ -1,5 +1,5 @@
 import { Prisma } from "@/generated/prisma/client";
-
+import type { CommandeFournisseur } from "@/types/commande-fournisseur";
 type CommandeAvecRestant = Awaited<ReturnType<typeof import("@/lib/services/commande-fournisseur.service").obtenirCommandeFournisseurParId>>;
 
 export function serialiserCommande(commande: any): CommandeFournisseur {
