@@ -145,8 +145,8 @@ export default function CommandeDetailPageClient({
 
             setCommande((prev) => ({ ...prev, statut: nouveauStatut }));
             toast.success(
-                nouveauStatut === "ENVOYEE" 
-                    ? "Commande envoyee au fournisseur." 
+                nouveauStatut === "ENVOYEE"
+                    ? "Commande envoyee au fournisseur."
                     : "Statut mis a jour."
             );
         } catch (error: any) {
@@ -272,7 +272,6 @@ export default function CommandeDetailPageClient({
                 onConfirm={confirmSupprimerLigne}
                 title="Supprimer la ligne"
                 description="Êtes-vous sûr de vouloir supprimer cette ligne de la commande ?"
-                variant="danger"
                 isConfirming={isSupprimantLigne}
             />
 

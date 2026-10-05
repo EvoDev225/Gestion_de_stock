@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!validationFichier.success) {
-        const premierErreur = validationFichier.error.errors[0];
+        const premierErreur = validationFichier.error.issues[0];
         return NextResponse.json(
             { error: premierErreur?.message ?? "Fichier invalide" },
             { status: 400 }

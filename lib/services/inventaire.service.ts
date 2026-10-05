@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerInventaires() {
@@ -59,7 +60,7 @@ export async function lancerInventaire(data: {
             quantitePhysique: 0,
             ecart: 0,
         }];
-    });
+    })as Prisma.LigneInventaireCreateWithoutInventaireInput[];
 
     return prisma.$transaction(async (tx) => {
         const inventaire = await tx.inventaire.create({

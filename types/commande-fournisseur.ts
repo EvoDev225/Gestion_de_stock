@@ -34,8 +34,11 @@ export interface CommandeFournisseur {
     ligneCommandeFournisseur: LigneCommandeFournisseur[];
 }
 
-export interface NouvelleLigneCommandeData {
+export interface NouvelleCommandeData {
+  fournisseurId: string;
+  lignes: {
     produitId: string;
     quantiteCommande: number;
     prixAchatUnitaire: number;
+  }[];
 }
