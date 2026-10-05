@@ -15,6 +15,7 @@ const schemaModificationUtilisateur = z
     nom: z.string().min(1).max(200).optional(),
     email: z.string().email().max(254).optional(),
     role: z.enum(["ADMIN", "EMPLOYEE"]).optional(),
+    actif: z.boolean().optional(),
   })
   .strip();
 
