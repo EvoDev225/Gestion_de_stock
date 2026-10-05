@@ -29,9 +29,9 @@ export default function Navbar() {
             >
                 {/* Logo */}
                 <div className="shrink-0">
-                    <a href="#" className="text-xl font-bold text-primary">
+                    <Link href={"/"} className="text-xl font-bold text-primary">
                         CorticalEvo
-                    </a>
+                    </Link>
                 </div>
                 
                 {/* Liens Desktop (masqués sur mobile) */}
