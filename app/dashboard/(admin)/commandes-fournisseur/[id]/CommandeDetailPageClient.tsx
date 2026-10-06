@@ -68,8 +68,8 @@ export default function CommandeDetailPageClient({
             }));
             setModalLigneOuvert(false);
             toast.success("Ligne ajoutee avec succes.");
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de l'ajout de la ligne.");
+        } catch (error) {
+                toast.error(error instanceof Error ? error.message : "Erreur lors de l'ajout de la ligne.");
             throw error;
         } finally {
             setIsSubmittingLigne(false);
@@ -92,8 +92,8 @@ export default function CommandeDetailPageClient({
                 ligneCommandeFournisseur: prev.ligneCommandeFournisseur.map((l) => (l.id === ligneId ? result : l)),
             }));
             toast.success("Ligne modifiee avec succes.");
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de la modification de la ligne.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erreur lors de la modification de la ligne.");
         } finally {
             setIsModifiantLigneId(null);
         }
@@ -124,8 +124,8 @@ export default function CommandeDetailPageClient({
             }));
             setLigneASupprimer(null);
             toast.success("Ligne supprimee avec succes.");
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de la suppression de la ligne.");
+        } catch (error) {
+            toast.error(error instanceof Error?error.message : "Erreur lors de la suppression de la ligne.");
             setLigneASupprimer(null);
         } finally {
             setIsSupprimantLigne(false);
@@ -149,8 +149,8 @@ export default function CommandeDetailPageClient({
                     ? "Commande envoyee au fournisseur."
                     : "Statut mis a jour."
             );
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors du changement de statut.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message: "Erreur lors du changement de statut.");
         } finally {
             setIsChangeantStatut(false);
         }
@@ -184,8 +184,8 @@ export default function CommandeDetailPageClient({
             }
             toast.success("Commande supprimee avec succes.");
             router.push("/dashboard/commandes-fournisseur");
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de la suppression de la commande.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message: "Erreur lors de la suppression de la commande.");
             setIsSuppressionCommandeOuverte(false);
         } finally {
             setIsSupprimantCommande(false);
@@ -207,7 +207,7 @@ export default function CommandeDetailPageClient({
                     <h1 className="text-2xl font-bold text-foreground">Commande du {formatDate(commande.dateCommande)}</h1>
                     <p className="text-muted-foreground mt-1">Fournisseur : {commande.fournisseur.nom}</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${statut.classes}`}>
                         {statut.label}
                     </span>
