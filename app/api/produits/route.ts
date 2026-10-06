@@ -12,6 +12,7 @@ const schemaCreationProduit = z
     prixVente: z.coerce.number().int().min(0),
     seuilMinimum: z.coerce.number().int().min(0).optional(),
     categorieId: z.string().min(1).optional(),
+    imageUrl: z.string().max(3_000_000).optional(), // data URL ou URL externe
   })
   .strip();
 
@@ -34,39 +35,27 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-    try {
-        const formData = await request.formData();
-        // ⚠️ Adapte le nom du champ ("file") à celui envoyé par ton frontend
-        const fichier = formData.get("file") as File | null;
+  const acces = await exigerRole(request, ["ADMIN"]); // adapte les rôles
+  if ("erreur" in acces) return acces.erreur;
 
-        if (!fichier) {
-            return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
-        }
+  try {
+    const body = await request.json().catch(() => null);
+    const parsed = schemaCreationProduit.safeParse(body);
 
-        const validation = schemaFichier.safeParse({
-            type: fichier.type,
-            size: fichier.size,
-            name: fichier.name,
-        });
-
-        if (!validation.success) {
-            return NextResponse.json(
-                { error: validation.error.issues[0]?.message ?? "Fichier invalide" },
-                { status: 400 }
-            );
-        }
-
-        // ✅ Conversion en data URL base64 : aucun système de fichiers nécessaire
-        const buffer = Buffer.from(await fichier.arrayBuffer());
-        const base64 = buffer.toString("base64");
-        const dataUrl = `data:${fichier.type};base64,${base64}`;
-
-        return NextResponse.json({ url: dataUrl });
-    } catch (error) {
-        console.error("Erreur upload:", error);
-        return NextResponse.json(
-            { error: "Erreur lors de l'enregistrement de l'image" },
-            { status: 500 }
-        );
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Données invalides" },
+        { status: 400 }
+      );
     }
+
+    const produit = await creerProduit(parsed.data);
+    return NextResponse.json(produit, { status: 201 });
+  } catch (error) {
+    console.error("Erreur création produit:", error);
+    return NextResponse.json(
+      { error: "Erreur lors de la création du produit" },
+      { status: 500 }
+    );
+  }
 }
