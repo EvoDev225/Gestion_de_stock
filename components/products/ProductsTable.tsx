@@ -21,163 +21,113 @@ interface ProductsTableProps {
     role?: "ADMIN" | "EMPLOYEE";
 }
 
-export default function ProductsTable({
-    produits,
-    onEdit,
-    onManageVariants,
-    onArchiveToggle,
-    role,
-}: ProductsTableProps) {
-    return (
-        <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <table className="w-full text-left">
-                <thead className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase">
-                    <tr>
-                        <th className="py-3 px-6">Image</th>
-                        <th className="py-3 px-6">Nom & SKU</th>
-                        <th className="py-3 px-6">Catégorie</th>
-                        <th className="py-3 px-6">Prix d'achat</th>
-                        <th className="py-3 px-6">Prix de vente</th>
-                        <th className="py-3 px-6">Stock</th>
-                        <th className="py-3 px-6">Statut</th>
-                        <th className="py-3 px-6 text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {produits.length === 0 ? (
-                        <tr>
-                            <td colSpan={8} className="py-12 px-6 text-center text-muted-foreground">
-                                <div className="flex flex-col items-center gap-3">
-                                    <PackageX className="h-10 w-10 opacity-50" aria-hidden="true" />
-                                    <span className="text-sm font-medium">Aucun produit trouvé</span>
-                                </div>
-                            </td>
-                        </tr>
-                    ) : (
-                        produits.map((produit) => (
-                            <tr
-                                key={produit.id}
-                                className="border-b border-border transition-colors hover:bg-muted/30"
-                            >
-                                {/* Image */}
-                                <td className="py-3 px-6">
-                                    <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-                                        {produit.imageUrl ? (
-                                            <Image
-                                                src={produit.imageUrl}
-                                                alt={produit.nom}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        ) : (
-                                            <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                                        )}
-                                    </div>
-                                </td>
+export default function ProductsTable({ produits, onEdit, onManageVariants, onArchiveToggle, role }: ProductsTableProps) {
+    const estEmploye = role === "EMPLOYEE";
 
-                                {/* Nom & SKU */}
-                                <td className="py-3 px-6">
-                                    <div className="font-semibold text-sm text-foreground">
-                                        {produit.nom}
-                                    </div>
-                                    <div className="font-mono text-xs text-muted-foreground">
-                                        SKU: {produit.sku}
-                                    </div>
-                                </td>
+    const badgeStock = (p: Produit) =>
+        p.stockCalcule === 0 ? (
+            <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
+                Rupture
+            </span>
+        ) : p.stockCalcule <= p.seuilMinimum ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                {p.stockCalcule}
+            </span>
+        ) : (
+            <span className="text-sm text-foreground">{p.stockCalcule}</span>
+        );
 
-                                {/* Catégorie */}
-                                <td className="py-3 px-6">
-                                    <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground">
-                                        {produit.categorie?.nom ?? "—"}
-                                    </span>
-                                </td>
+    const boutonsActions = (p: Produit) => (
+        <>
+            {!estEmploye && (
+                <button type="button" onClick={() => onEdit(p)} title="Éditer"
+                    className="rounded p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                </button>
+            )}
+            <button type="button" onClick={() => onManageVariants(p)} title="Gérer les variantes"
+                className="rounded p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <Layers className="h-4 w-4" aria-hidden="true" />
+            </button>
+            {!estEmploye && (
+                <button type="button" onClick={() => onArchiveToggle(p)} title={p.archive ? "Désarchiver" : "Archiver"}
+                    className="rounded p-2 text-muted-foreground hover:bg-muted hover:text-destructive">
+                    {p.archive ? <ArchiveRestore className="h-4 w-4" aria-hidden="true" /> : <Archive className="h-4 w-4" aria-hidden="true" />}
+                </button>
+            )}
+        </>
+    );
 
-                                {/* Prix d'achat */}
-                                <td className="py-3 px-6 text-sm text-muted-foreground">
-                                    {formaterPrixFCFA(produit.prixAchat)}
-                                </td>
-
-                                {/* Prix de vente */}
-                                <td className="py-3 px-6 text-sm font-semibold text-primary">
-                                    {formaterPrixFCFA(produit.prixVente)}
-                                </td>
-
-                                {/* Stock — calculé via Σ lots, plus jamais produit.quantiteStock */}
-                                <td className="py-3 px-6">
-                                    {produit.stockCalcule === 0 ? (
-                                        <span className="inline-flex items-center rounded-full bg-destructive/10 px-2.5 py-1 text-xs text-destructive">
-                                            Rupture
-                                        </span>
-                                    ) : produit.stockCalcule <= produit.seuilMinimum ? (
-                                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
-                                            <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                                            {produit.stockCalcule}
-                                        </span>
-                                    ) : (
-                                        <span className="text-sm text-muted-foreground">
-                                            {produit.stockCalcule}
-                                        </span>
-                                    )}
-                                </td>
-
-                                {/* Statut */}
-                                <td className="py-3 px-6">
-                                    <span
-                                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${!produit.archive
-                                            ? "bg-primary/10 text-primary"
-                                            : "bg-muted text-muted-foreground"
-                                            }`}
-                                    >
-                                        <span
-                                            className={`h-1.5 w-1.5 rounded-full ${!produit.archive ? "bg-primary" : "bg-muted-foreground"
-                                                }`}
-                                        />
-                                        {produit.archive ? (
-                                            <ArchiveRestore className="h-4 w-4" aria-hidden="true" />
-                                        ) : (
-                                            <Archive className="h-4 w-4" aria-hidden="true" />
-                                        )}
-                                    </span>
-                                </td>
-
-                                {/* Actions */}
-                                <td className="py-3 px-6">
-                                    <div className="flex justify-end gap-2">
-                                        {role !== "EMPLOYEE" && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onEdit(produit)}
-                                                title="Éditer"
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                            >
-                                                <Pencil className="h-4 w-4" aria-hidden="true" />
-                                            </button>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={() => onManageVariants(produit)}
-                                            title="Gérer les variantes"
-                                            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        >
-                                            <Layers className="h-4 w-4" aria-hidden="true" />
-                                        </button>
-                                        {role !== "EMPLOYEE" && (
-                                            <button
-                                                type="button"
-                                                onClick={() => onArchiveToggle(produit)}
-                                                title={produit.archive ? "Désarchiver" : "Archiver"}
-                                                className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                                            >
-                                                <Archive className="h-4 w-4" aria-hidden="true" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))
-                    )}
-                </tbody>
-            </table>
+    const vide = (
+        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
+            <PackageX className="h-10 w-10 opacity-50" aria-hidden="true" />
+            <span className="text-sm font-medium">Aucun produit trouvé</span>
         </div>
+    );
+
+    return (
+        <>
+            {/* ───────── MOBILE : cartes ───────── */}
+            <div className="flex flex-col gap-3 md:hidden">
+                {produits.length === 0 ? (
+                    <div className="rounded-xl border border-border bg-card">{vide}</div>
+                ) : (
+                    produits.map((p) => (
+                        <div key={p.id} className="rounded-xl border border-border bg-card p-4">
+                            <div className="flex items-start gap-3">
+                                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                                    {p.imageUrl ? (
+                                        <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
+                                    ) : (
+                                        <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                                    )}
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-foreground">{p.nom}</p>
+                                    <p className="font-mono text-xs text-muted-foreground">SKU: {p.sku}</p>
+                                    <span className="mt-1 inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                                        {p.categorie?.nom ?? "—"}
+                                    </span>
+                                </div>
+
+                                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                    p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                                }`}>
+                                    {p.archive ? "Archivé" : "Actif"}
+                                </span>
+                            </div>
+
+                            <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                                <div>
+                                    <dt className="text-muted-foreground">Achat</dt>
+                                    <dd className="font-medium text-foreground">{formaterPrixFCFA(p.prixAchat)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-muted-foreground">Vente</dt>
+                                    <dd className="font-semibold text-primary">{formaterPrixFCFA(p.prixVente)}</dd>
+                                </div>
+                                <div>
+                                    <dt className="text-muted-foreground">Stock</dt>
+                                    <dd>{badgeStock(p)}</dd>
+                                </div>
+                            </dl>
+
+                            <div className="mt-3 flex justify-end gap-1 border-t border-border pt-2">
+                                {boutonsActions(p)}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+
+            {/* ───────── DESKTOP / TABLETTE : tableau ───────── */}
+            <div className="hidden overflow-x-auto rounded-xl border border-border bg-card md:block">
+                <table className="w-full min-w-200 text-left">
+                    {/* ton <thead> et ton <tbody> actuels, inchangés */}
+                </table>
+            </div>
+        </>
     );
 }

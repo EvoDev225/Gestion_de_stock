@@ -31,6 +31,9 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
     const [view, setView] = useState<VueAffichage>("table");
     const [currentPage, setCurrentPage] = useState(1);
 
+    // ✅ NOUVEAU : détection mobile pour forcer la vue grille
+    const [isMobile, setIsMobile] = useState(false);
+
     // Modal produit (création / édition)
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [produitEnEdition, setProduitEnEdition] = useState<Produit | null>(null);
@@ -47,6 +50,17 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
     const [categorieASupprimer, setCategorieASupprimer] = useState<Categorie | null>(null);
     const [erreurSuppressionCategorie, setErreurSuppressionCategorie] = useState<string | null>(null);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+    // ✅ NOUVEAU : écoute le redimensionnement de l'écran
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
+
+    // ✅ NOUVEAU : sur mobile, on force toujours la vue grille (cartes)
+    const effectiveView: VueAffichage = isMobile ? "grille" : view;
 
     // ── Chargement initial : produits + catégories ──
     const fetchProduits = useCallback(async () => {
@@ -153,8 +167,6 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
         seuilMinimum: number;
         imageUrl: string | null;
     }) => {
-        // quantiteStock retiré du payload : le stock ne se déclare plus
-        // que via la création d'un Lot (creerLot), jamais depuis ce formulaire.
         const isEdition = produitEnEdition !== null;
         const url = isEdition ? `/api/produits/${produitEnEdition!.id}` : "/api/produits";
         const method = isEdition ? "PATCH" : "POST";
@@ -228,7 +240,7 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
                 body: JSON.stringify({ ...data, produitId: produitPourVariantes.id }),
             });
             if (!res.ok) throw new Error("Erreur lors de l'ajout de la variante");
-            await handleOpenVariantsPanel(produitPourVariantes); // recharge la liste
+            await handleOpenVariantsPanel(produitPourVariantes);
             toast.success("Variante ajoutée avec succès.");
         } catch (error) {
             toast.error("Erreur lors de l'ajout de la variante.");
@@ -359,6 +371,7 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
                         onStatusChange={setStatusFilter}
                         view={view}
                         onViewChange={setView}
+                        isMobile={isMobile}
                     />
 
                     {isLoading ? (
@@ -367,7 +380,8 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
                         </div>
                     ) : (
                         <>
-                            {view === "table" ? (
+                            {/* ✅ Utilise effectiveView (grille forcée sur mobile) */}
+                            {effectiveView === "table" ? (
                                 <ProductsTable
                                     produits={produitsPage}
                                     onEdit={handleOpenEditModal}
@@ -456,14 +470,15 @@ export default function ProductsPageClient({ role = "ADMIN" }: { role?: "ADMIN" 
                 onSubmit={handleSubmitCategorie}
             />
 
+            {/* ✅ Props ConfirmDialog corrigées : description + onClose + erreur ?? undefined */}
             <ConfirmDialog
                 isOpen={categorieASupprimer !== null}
                 title="Supprimer cette catégorie ?"
-                message={`La catégorie "${categorieASupprimer?.nom}" sera supprimée définitivement.`}
+                description={`La catégorie "${categorieASupprimer?.nom}" sera supprimée définitivement.`}
                 confirmLabel="Supprimer"
                 onConfirm={confirmDeleteCategorie}
-                onCancel={() => setCategorieASupprimer(null)}
-                erreur={erreurSuppressionCategorie}
+                onClose={() => setCategorieASupprimer(null)}
+                erreur={erreurSuppressionCategorie ?? undefined}
             />
         </div>
     );
