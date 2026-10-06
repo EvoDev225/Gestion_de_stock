@@ -38,6 +38,24 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
             <span className="text-sm text-foreground">{p.stockCalcule}</span>
         );
 
+    const badgeStatut = (p: Produit) => (
+        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+            p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+        }`}>
+            {p.archive ? "Archivé" : "Actif"}
+        </span>
+    );
+
+    const vignette = (p: Produit, taille: string) => (
+        <div className={`relative flex ${taille} shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted`}>
+            {p.imageUrl ? (
+                <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
+            ) : (
+                <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+            )}
+        </div>
+    );
+
     const boutonsActions = (p: Produit) => (
         <>
             {!estEmploye && (
@@ -66,6 +84,8 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
         </div>
     );
 
+    const thClass = "px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground";
+
     return (
         <>
             {/* ───────── MOBILE : cartes ───────── */}
@@ -76,13 +96,7 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
                     produits.map((p) => (
                         <div key={p.id} className="rounded-xl border border-border bg-card p-4">
                             <div className="flex items-start gap-3">
-                                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-                                    {p.imageUrl ? (
-                                        <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
-                                    ) : (
-                                        <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                                    )}
-                                </div>
+                                {vignette(p, "h-14 w-14")}
 
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-foreground">{p.nom}</p>
@@ -92,11 +106,7 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
                                     </span>
                                 </div>
 
-                                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                                    p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                                }`}>
-                                    {p.archive ? "Archivé" : "Actif"}
-                                </span>
+                                {badgeStatut(p)}
                             </div>
 
                             <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
@@ -125,7 +135,54 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
             {/* ───────── DESKTOP / TABLETTE : tableau ───────── */}
             <div className="hidden overflow-x-auto rounded-xl border border-border bg-card md:block">
                 <table className="w-full min-w-200 text-left">
-                    {/* ton <thead> et ton <tbody> actuels, inchangés */}
+                    <thead className="border-b border-border bg-muted/30">
+                        <tr>
+                            <th className={thClass}>Produit</th>
+                            <th className={thClass}>Catégorie</th>
+                            <th className={`${thClass} text-right`}>Prix d&apos;achat</th>
+                            <th className={`${thClass} text-right`}>Prix de vente</th>
+                            <th className={`${thClass} text-center`}>Stock</th>
+                            <th className={thClass}>Statut</th>
+                            <th className={`${thClass} text-right`}>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                        {produits.length === 0 ? (
+                            <tr>
+                                <td colSpan={7}>{vide}</td>
+                            </tr>
+                        ) : (
+                            produits.map((p) => (
+                                <tr key={p.id} className="transition-colors hover:bg-muted/30">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            {vignette(p, "h-12 w-12")}
+                                            <div className="min-w-0">
+                                                <p className="truncate text-sm font-semibold text-foreground">{p.nom}</p>
+                                                <p className="font-mono text-xs text-muted-foreground">SKU: {p.sku}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                                            {p.categorie?.nom ?? "—"}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-sm text-foreground">
+                                        {formaterPrixFCFA(p.prixAchat)}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-sm font-semibold text-primary">
+                                        {formaterPrixFCFA(p.prixVente)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">{badgeStock(p)}</td>
+                                    <td className="px-4 py-3">{badgeStatut(p)}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-end gap-1">{boutonsActions(p)}</div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
                 </table>
             </div>
         </>
