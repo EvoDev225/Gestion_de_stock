@@ -30,31 +30,13 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
                 Rupture
             </span>
         ) : p.stockCalcule <= p.seuilMinimum ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
+            <span className="inline-flex gap-1 items-center rounded-full bg-amber-500/10 px-2.5 py-1 text-xs text-amber-600">
                 <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                 {p.stockCalcule}
             </span>
         ) : (
             <span className="text-sm text-foreground">{p.stockCalcule}</span>
         );
-
-    const badgeStatut = (p: Produit) => (
-        <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-            p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-        }`}>
-            {p.archive ? "Archivé" : "Actif"}
-        </span>
-    );
-
-    const vignette = (p: Produit, taille: string) => (
-        <div className={`relative flex ${taille} shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted`}>
-            {p.imageUrl ? (
-                <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
-            ) : (
-                <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-            )}
-        </div>
-    );
 
     const boutonsActions = (p: Produit) => (
         <>
@@ -84,8 +66,6 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
         </div>
     );
 
-    const thClass = "px-4 py-3 text-xs font-medium uppercase tracking-wide text-muted-foreground";
-
     return (
         <>
             {/* ───────── MOBILE : cartes ───────── */}
@@ -96,7 +76,13 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
                     produits.map((p) => (
                         <div key={p.id} className="rounded-xl border border-border bg-card p-4">
                             <div className="flex items-start gap-3">
-                                {vignette(p, "h-14 w-14")}
+                                <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                                    {p.imageUrl ? (
+                                        <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
+                                    ) : (
+                                        <ImageIcon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                                    )}
+                                </div>
 
                                 <div className="min-w-0 flex-1">
                                     <p className="truncate text-sm font-semibold text-foreground">{p.nom}</p>
@@ -106,7 +92,11 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
                                     </span>
                                 </div>
 
-                                {badgeStatut(p)}
+                                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                    p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                                }`}>
+                                    {p.archive ? "Archivé" : "Actif"}
+                                </span>
                             </div>
 
                             <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
@@ -135,48 +125,71 @@ export default function ProductsTable({ produits, onEdit, onManageVariants, onAr
             {/* ───────── DESKTOP / TABLETTE : tableau ───────── */}
             <div className="hidden overflow-x-auto rounded-xl border border-border bg-card md:block">
                 <table className="w-full min-w-200 text-left">
-                    <thead className="border-b border-border bg-muted/30">
+                    <thead className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase">
                         <tr>
-                            <th className={thClass}>Produit</th>
-                            <th className={thClass}>Catégorie</th>
-                            <th className={`${thClass} text-right`}>Prix d&apos;achat</th>
-                            <th className={`${thClass} text-right`}>Prix de vente</th>
-                            <th className={`${thClass} text-center`}>Stock</th>
-                            <th className={thClass}>Statut</th>
-                            <th className={`${thClass} text-right`}>Actions</th>
+                            <th className="py-3 px-6">Produit</th>
+                            <th className="py-3 px-6">Catégorie</th>
+                            <th className="py-3 px-6">Prix achat</th>
+                            <th className="py-3 px-6">Prix vente</th>
+                            <th className="py-3 px-6">Stock</th>
+                            <th className="py-3 px-6">Statut</th>
+                            <th className="py-3 px-6 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody>
                         {produits.length === 0 ? (
                             <tr>
                                 <td colSpan={7}>{vide}</td>
                             </tr>
                         ) : (
                             produits.map((p) => (
-                                <tr key={p.id} className="transition-colors hover:bg-muted/30">
-                                    <td className="px-4 py-3">
+                                <tr key={p.id} className="border-b border-border transition-colors hover:bg-muted/30">
+                                    {/* Produit : image + nom + SKU */}
+                                    <td className="py-3 px-6">
                                         <div className="flex items-center gap-3">
-                                            {vignette(p, "h-12 w-12")}
+                                            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                                                {p.imageUrl ? (
+                                                    <Image src={p.imageUrl} alt={p.nom} fill className="object-cover" />
+                                                ) : (
+                                                    <ImageIcon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                                                )}
+                                            </div>
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-semibold text-foreground">{p.nom}</p>
                                                 <p className="font-mono text-xs text-muted-foreground">SKU: {p.sku}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
-                                            {p.categorie?.nom ?? "—"}
-                                        </span>
+
+                                    {/* Catégorie */}
+                                    <td className="py-3 px-6 text-sm text-muted-foreground">
+                                        {p.categorie?.nom ?? "—"}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm text-foreground">
+
+                                    {/* Prix achat */}
+                                    <td className="py-3 px-6 text-sm text-foreground">
                                         {formaterPrixFCFA(p.prixAchat)}
                                     </td>
-                                    <td className="px-4 py-3 text-right text-sm font-semibold text-primary">
+
+                                    {/* Prix vente */}
+                                    <td className="py-3 px-6 text-sm font-semibold text-primary">
                                         {formaterPrixFCFA(p.prixVente)}
                                     </td>
-                                    <td className="px-4 py-3 text-center">{badgeStock(p)}</td>
-                                    <td className="px-4 py-3">{badgeStatut(p)}</td>
-                                    <td className="px-4 py-3">
+
+                                    {/* Stock */}
+                                    <td className="py-3 px-6">{badgeStock(p)}</td>
+
+                                    {/* Statut */}
+                                    <td className="py-3 px-6">
+                                        <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                            p.archive ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                                        }`}>
+                                            {p.archive ? "Archivé" : "Actif"}
+                                        </span>
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td className="py-3 px-6">
                                         <div className="flex justify-end gap-1">{boutonsActions(p)}</div>
                                     </td>
                                 </tr>
