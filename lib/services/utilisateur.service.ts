@@ -129,3 +129,22 @@ export async function modifierProfil(
         select: { id: true, nom: true, email: true, role: true, actif: true },
     });
 }
+export async function reactiverUtilisateur(id: string, utilisateurAdminId: string) {
+    return prisma.$transaction(async (tx) => {
+        const utilisateur = await tx.utilisateur.update({
+            where: { id },
+            data: { actif: true },
+            select: { id: true, nom: true, actif: true },
+        });
+
+        await enregistrerActivite({
+            action: "UTILISATEUR_REACTIVE",
+            entiteConcerneeType: "Utilisateur",
+            entiteConcerneeId: utilisateur.id,
+            details: `Compte réactivé : ${utilisateur.nom}`,
+            utilisateurId: utilisateurAdminId,
+        }, tx);
+
+        return utilisateur;
+    });
+}

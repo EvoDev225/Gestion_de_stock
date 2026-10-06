@@ -4,6 +4,7 @@ import {
     obtenirUtilisateurParId,
     modifierUtilisateur,
     desactiverUtilisateur,
+    reactiverUtilisateur,
 } from "@/lib/services/utilisateur.service";
 import { exigerRole } from "@/lib/auth";
 import { validerCorps, validerParametre } from "@/lib/validation";
@@ -51,34 +52,32 @@ export async function PATCH(
 
     const { id: idBrut } = await params;
     const validationId = validerParametre(idBrut, schemaId);
-
-    if (!validationId.succes) {
-        return validationId.erreur;
-    }
+    if (!validationId.succes) return validationId.erreur;
 
     const validation = await validerCorps(request, schemaModificationUtilisateur);
-
-    if (!validation.succes) {
-        return validation.erreur;
-    }
+    if (!validation.succes) return validation.erreur;
 
     const data = validation.donnees;
     const id = validationId.donnees;
 
     try {
-        let utilisateur;
+    let utilisateur;
+    
+    if (data.actif === false) {
+        utilisateur = await desactiverUtilisateur(id, acces.session.id);
+    } else if (data.actif === true) {
+        utilisateur = await reactiverUtilisateur(id, acces.session.id);
+    } else {
+        // ❌ AVANT (cause l'erreur ESLint)
+        // const { actif: _actif, ...autresDonnees } = data;
+        // utilisateur = await modifierUtilisateur(id, autresDonnees);
         
-        // Si on change le statut actif, on utilise la fonction dédiée
-        if (data.actif === false) {
-            utilisateur = await desactiverUtilisateur(id, acces.session.id);
-        } else {
-            // Sinon, modification classique (sans actif)
-            const { actif, ...autresDonnees } = data;
-            utilisateur = await modifierUtilisateur(id, autresDonnees);
-        }
-        
-        return NextResponse.json(utilisateur);
-    } catch (error) {
+        // ✅ APRÈS (plus propre, pas de destructuring inutile)
+        utilisateur = await modifierUtilisateur(id, data);
+    }
+    
+    return NextResponse.json(utilisateur);
+} catch (error) {
         console.error("Erreur modification utilisateur:", error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : "Erreur lors de la modification" },

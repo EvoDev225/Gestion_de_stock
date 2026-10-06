@@ -6,6 +6,7 @@ interface UtilisateursTableProps {
     utilisateurs: Utilisateur[];
     utilisateurCourantId: string;
     onDemanderDesactivation: (utilisateur: Utilisateur) => void;
+    onDemanderReactivation: (utilisateur: Utilisateur) => void;
 }
 
 function formaterDate(iso: string) {
@@ -20,6 +21,7 @@ export default function UtilisateursTable({
     utilisateurs,
     utilisateurCourantId,
     onDemanderDesactivation,
+    onDemanderReactivation,
 }: UtilisateursTableProps) {
     return (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -45,21 +47,29 @@ export default function UtilisateursTable({
                                 <td className="px-4 py-3"><StatutBadge actif={utilisateur.actif} /></td>
                                 <td className="px-4 py-3 text-sm text-muted-foreground">{formaterDate(utilisateur.dateCreation)}</td>
                                 <td className="px-4 py-3 text-right">
-                                    <button
-                                        type="button"
-                                        onClick={() => onDemanderDesactivation(utilisateur)}
-                                        disabled={estSoiMeme || !utilisateur.actif}
-                                        title={
-                                            estSoiMeme
-                                                ? "Vous ne pouvez pas désactiver votre propre compte"
-                                                : !utilisateur.actif
-                                                ? "Compte déjà désactivé"
-                                                : "Désactiver ce compte"
-                                        }
-                                        className="rounded-md px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                                    >
-                                        Désactiver
-                                    </button>
+                                    {utilisateur.actif ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => onDemanderDesactivation(utilisateur)}
+                                            disabled={estSoiMeme}
+                                            title={
+                                                estSoiMeme
+                                                    ? "Vous ne pouvez pas désactiver votre propre compte"
+                                                    : "Désactiver ce compte"
+                                            }
+                                            className="rounded-md px-3 py-1.5 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                                        >
+                                            Désactiver
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => onDemanderReactivation(utilisateur)}
+                                            className="rounded-md px-3 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                                        >
+                                            Réactiver
+                                        </button>
+                                    )}
                                 </td>
                             </tr>
                         );

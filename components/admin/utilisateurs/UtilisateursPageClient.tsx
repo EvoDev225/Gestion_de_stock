@@ -9,7 +9,6 @@ import NouvelUtilisateurModal from "./NouvelUtilisateurModal";
 import UtilisateursTable from "./UtilisateursTable";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
-
 interface UtilisateursPageClientProps {
     utilisateursInitiaux: Utilisateur[];
     utilisateurCourantId: string;
@@ -25,9 +24,12 @@ export default function UtilisateursPageClient({
     const [filtreRole, setFiltreRole] = useState<RoleFiltre>("TOUS");
     const [modalOuvert, setModalOuvert] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    
     const [utilisateurAConfirmer, setUtilisateurAConfirmer] = useState<Utilisateur | null>(null);
     const [isConfirming, setIsConfirming] = useState(false);
+    
+    const [utilisateurAReactive, setUtilisateurAReactive] = useState<Utilisateur | null>(null);
+    const [isReactivating, setIsReactivating] = useState(false);
 
     const utilisateursFiltres = useMemo(() => {
         if (filtreRole === "TOUS") return utilisateurs;
@@ -61,7 +63,7 @@ export default function UtilisateursPageClient({
 
             setUtilisateurs((prev) => [nouvelUtilisateur, ...prev]);
             setModalOuvert(false);
-            toast.success("Utilisateur cree avec succes.");
+            toast.success("Utilisateur créé avec succès.");
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "Erreur lors de la création de l'utilisateur.");
         } finally {
@@ -70,34 +72,62 @@ export default function UtilisateursPageClient({
     };
 
     const handleConfirmerDesactivation = async () => {
-    if (!utilisateurAConfirmer) return;
-    setIsConfirming(true);
-    try {
-        const res = await fetch(`/api/utilisateurs/${utilisateurAConfirmer.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ actif: false }), // ✅ LE CORPS OBLIGATOIRE
-        });
+        if (!utilisateurAConfirmer) return;
+        setIsConfirming(true);
+        try {
+            const res = await fetch(`/api/utilisateurs/${utilisateurAConfirmer.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ actif: false }),
+            });
 
-        if (!res.ok) {
-            const body = await res.json().catch(() => ({}));
-            throw new Error(body.error || "Erreur lors de la désactivation");
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || "Erreur lors de la désactivation");
+            }
+
+            setUtilisateurs((prev) =>
+                prev.map((u) =>
+                    u.id === utilisateurAConfirmer.id ? { ...u, actif: false } : u
+                )
+            );
+            setUtilisateurAConfirmer(null);
+            toast.success("Compte désactivé.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erreur inattendue");
+        } finally {
+            setIsConfirming(false);
         }
+    };
 
-        // Mise à jour de la liste sans rechargement
-        setUtilisateurs((prev) =>
-            prev.map((u) =>
-                u.id === utilisateurAConfirmer.id ? { ...u, actif: false } : u
-            )
-        );
-        setUtilisateurAConfirmer(null);
-        toast.success("Compte désactivé.");
-    } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Erreur inattendue");
-    } finally {
-        setIsConfirming(false);
-    }
-};
+    const handleConfirmerReactivation = async () => {
+        if (!utilisateurAReactive) return;
+        setIsReactivating(true);
+        try {
+            const res = await fetch(`/api/utilisateurs/${utilisateurAReactive.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ actif: true }),
+            });
+
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || "Erreur lors de la réactivation");
+            }
+
+            setUtilisateurs((prev) =>
+                prev.map((u) =>
+                    u.id === utilisateurAReactive.id ? { ...u, actif: true } : u
+                )
+            );
+            setUtilisateurAReactive(null);
+            toast.success("Compte réactivé avec succès.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erreur inattendue");
+        } finally {
+            setIsReactivating(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -112,6 +142,7 @@ export default function UtilisateursPageClient({
                     utilisateurs={utilisateursFiltres}
                     utilisateurCourantId={utilisateurCourantId}
                     onDemanderDesactivation={setUtilisateurAConfirmer}
+                    onDemanderReactivation={setUtilisateurAReactive}
                 />
             </div>
 
@@ -122,6 +153,7 @@ export default function UtilisateursPageClient({
                         utilisateur={utilisateur}
                         utilisateurCourantId={utilisateurCourantId}
                         onDemanderDesactivation={setUtilisateurAConfirmer}
+                        onDemanderReactivation={setUtilisateurAReactive}
                     />
                 ))}
                 {utilisateursFiltres.length === 0 && (
@@ -152,6 +184,22 @@ export default function UtilisateursPageClient({
                 isConfirming={isConfirming}
                 onConfirm={handleConfirmerDesactivation}
                 onClose={() => setUtilisateurAConfirmer(null)}
+            />
+
+            <ConfirmDialog
+                isOpen={utilisateurAReactive !== null}
+                title="Réactiver cet utilisateur ?"
+                description={
+                    utilisateurAReactive
+                        ? `Le compte de ${utilisateurAReactive.nom} sera réactivé et pourra à nouveau se connecter.`
+                        : ""
+                }
+                confirmLabel="Réactiver"
+                cancelLabel="Annuler"
+                variant="default"
+                isConfirming={isReactivating}
+                onConfirm={handleConfirmerReactivation}
+                onClose={() => setUtilisateurAReactive(null)}
             />
         </div>
     );
