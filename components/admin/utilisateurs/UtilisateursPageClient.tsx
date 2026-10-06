@@ -62,39 +62,42 @@ export default function UtilisateursPageClient({
             setUtilisateurs((prev) => [nouvelUtilisateur, ...prev]);
             setModalOuvert(false);
             toast.success("Utilisateur cree avec succes.");
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de la création de l'utilisateur.");
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Erreur lors de la création de l'utilisateur.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     const handleConfirmerDesactivation = async () => {
-        if (!utilisateurAConfirmer) return;
-        setIsConfirming(true);
+    if (!utilisateurAConfirmer) return;
+    setIsConfirming(true);
+    try {
+        const res = await fetch(`/api/utilisateurs/${utilisateurAConfirmer.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ actif: false }), // ✅ LE CORPS OBLIGATOIRE
+        });
 
-        try {
-            const response = await fetch(`/api/utilisateurs/${utilisateurAConfirmer.id}`, {
-                method: "DELETE",
-            });
-
-            const result = await response.json().catch(() => null);
-
-            if (!response.ok) {
-                throw new Error(result?.error || "Une erreur est survenue lors de la désactivation.");
-            }
-
-            setUtilisateurs((prev) =>
-                prev.map((u) => (u.id === utilisateurAConfirmer.id ? { ...u, actif: false } : u))
-            );
-            toast.success("Utilisateur desactive avec succes.");
-            setUtilisateurAConfirmer(null);
-        } catch (error: any) {
-            toast.error(error.message || "Erreur lors de la désactivation.");
-        } finally {
-            setIsConfirming(false);
+        if (!res.ok) {
+            const body = await res.json().catch(() => ({}));
+            throw new Error(body.error || "Erreur lors de la désactivation");
         }
-    };
+
+        // Mise à jour de la liste sans rechargement
+        setUtilisateurs((prev) =>
+            prev.map((u) =>
+                u.id === utilisateurAConfirmer.id ? { ...u, actif: false } : u
+            )
+        );
+        setUtilisateurAConfirmer(null);
+        toast.success("Compte désactivé.");
+    } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Erreur inattendue");
+    } finally {
+        setIsConfirming(false);
+    }
+};
 
     return (
         <div className="space-y-6">
