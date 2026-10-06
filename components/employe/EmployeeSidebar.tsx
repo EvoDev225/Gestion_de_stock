@@ -79,14 +79,11 @@ export default function EmployeeSidebar({
     const getInitials = (name: string): string =>
         name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
 
-    // Ferme le drawer mobile à chaque changement de route
     useEffect(() => {
         closeMobile();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pathname]);
 
-    // Une section est "ouverte" si l'utilisateur l'a togglée (mobile uniquement),
-    // ou par défaut si elle contient la page active
     const isSectionOpen = (section: NavSection) => {
         if (section.title in openSections) return openSections[section.title];
         return section.items.some((item) => item.href === pathname);
@@ -98,7 +95,7 @@ export default function EmployeeSidebar({
         try {
             await fetch("/api/auth/logout", { method: "POST" });
             router.push("/login");
-            router.refresh(); // force le middleware à revalider l'absence de session
+            router.refresh();
         } catch (error) {
             console.error("Erreur lors de la déconnexion :", error);
             setIsLoggingOut(false);
@@ -117,7 +114,8 @@ export default function EmployeeSidebar({
             )}
 
             <aside
-                className={`fixed left-0 top-0 h-screen bg-card shadow-[24px_0_48px_rgba(26,26,26,0.04)] flex flex-col z-50 border-r border-border
+                // ✅ CORRIGÉ : h-dvh au lieu de h-screen (s'adapte à la barre Chrome mobile)
+                className={`fixed left-0 top-0 h-screen h-dvh bg-card shadow-[24px_0_48px_rgba(26,26,26,0.04)] flex flex-col z-50 border-r border-border
                     transition-transform duration-300 ease-in-out
                     w-72 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
                     md:translate-x-0 md:w-20 lg:w-64`}
@@ -141,8 +139,8 @@ export default function EmployeeSidebar({
                     </button>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 flex flex-col gap-2">
+                {/* Navigation : prend tout l'espace restant et scrolle si besoin */}
+                <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 flex flex-col gap-2 min-h-0">
                     {navSections.map((section) => {
                         const sectionOpen = isSectionOpen(section);
 
@@ -170,7 +168,7 @@ export default function EmployeeSidebar({
                                 <div
                                     className={`flex flex-col gap-1 overflow-hidden transition-all duration-200
                                         md:max-h-none lg:max-h-none
-                                        ${!sectionOpen ? "max-h-0" : "max-h-[500px]"}
+                                        ${!sectionOpen ? "max-h-0" : "max-h-[600px]"}
                                     `}
                                 >
                                     {section.items.map((item) => {
@@ -203,27 +201,32 @@ export default function EmployeeSidebar({
                     })}
                 </nav>
 
-                {/* Profile Block */}
-                <div className="p-3 border-t border-border mt-auto shrink-0">
-                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm border border-border shrink-0">
-                                {getInitials(userName)}
+                {/* ✅ CORRIGÉ : Footer FIXE, toujours visible, avec safe-area pour les téléphones */}
+                <div
+                    className="shrink-0 border-t border-border"
+                    style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+                >
+                    <div className="p-3">
+                        <div className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm border border-border shrink-0">
+                                    {getInitials(userName)}
+                                </div>
+                                <div className="overflow-hidden md:hidden lg:block">
+                                    <p className="text-sm font-medium text-foreground truncate">{userName}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{userRole}</p>
+                                </div>
                             </div>
-                            <div className="overflow-hidden md:hidden lg:block">
-                                <p className="text-sm font-medium text-foreground truncate">{userName}</p>
-                                <p className="text-xs text-muted-foreground truncate">{userRole}</p>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={handleLogout}
+                                disabled={isLoggingOut}
+                                className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:hidden lg:block"
+                                aria-label="Déconnexion"
+                            >
+                                <LogOut className="w-5 h-5" />
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleLogout}
-                            disabled={isLoggingOut}
-                            className="text-muted-foreground hover:text-destructive transition-colors p-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed md:hidden lg:block"
-                            aria-label="Déconnexion"
-                        >
-                            <LogOut className="w-5 h-5" />
-                        </button>
                     </div>
                 </div>
             </aside>
