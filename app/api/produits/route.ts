@@ -15,6 +15,16 @@ const schemaCreationProduit = z
   })
   .strip();
 
+  const schemaFichier = z.object({
+    type: z.string().refine(
+        (t) => ["image/jpeg", "image/png", "image/webp"].includes(t),
+        "Type d'image non supporté (JPEG, PNG ou WebP uniquement)"
+    ),
+    size: z.number().max(2 * 1024 * 1024, "Image trop lourde (2 Mo maximum)"),
+    name: z.string().min(1),
+});
+
+
 export async function GET(request: NextRequest) {
   const acces = await exigerRole(request, ["ADMIN", "EMPLOYEE"]);
   if ("erreur" in acces) return acces.erreur;
@@ -24,32 +34,39 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const acces = await exigerRole(request, ["ADMIN"]);
-  if ("erreur" in acces) return acces.erreur;
+    try {
+        const formData = await request.formData();
+        // ⚠️ Adapte le nom du champ ("file") à celui envoyé par ton frontend
+        const fichier = formData.get("file") as File | null;
 
-  const validation = await validerCorps(request, schemaCreationProduit);
+        if (!fichier) {
+            return NextResponse.json({ error: "Aucun fichier reçu" }, { status: 400 });
+        }
 
-  if (!validation.succes) {
-    return validation.erreur;
-  }
+        const validation = schemaFichier.safeParse({
+            type: fichier.type,
+            size: fichier.size,
+            name: fichier.name,
+        });
 
-  const { nom, description, prixAchat, prixVente, seuilMinimum, categorieId } =
-    validation.donnees;
+        if (!validation.success) {
+            return NextResponse.json(
+                { error: validation.error.issues[0]?.message ?? "Fichier invalide" },
+                { status: 400 }
+            );
+        }
 
-  try {
-    const produit = await creerProduit({
-      nom,
-      description,
-      prixAchat,
-      prixVente,
-      seuilMinimum,
-      categorieId,
-    });
-    return NextResponse.json(produit, { status: 201 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Données invalides" },
-      { status: 409 }
-    );
-  }
+        // ✅ Conversion en data URL base64 : aucun système de fichiers nécessaire
+        const buffer = Buffer.from(await fichier.arrayBuffer());
+        const base64 = buffer.toString("base64");
+        const dataUrl = `data:${fichier.type};base64,${base64}`;
+
+        return NextResponse.json({ url: dataUrl });
+    } catch (error) {
+        console.error("Erreur upload:", error);
+        return NextResponse.json(
+            { error: "Erreur lors de l'enregistrement de l'image" },
+            { status: 500 }
+        );
+    }
 }

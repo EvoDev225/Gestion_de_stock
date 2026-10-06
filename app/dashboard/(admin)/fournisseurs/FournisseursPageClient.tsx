@@ -1,206 +1,103 @@
-"use client";
+import { Pencil, Trash2, Truck } from "lucide-react";
+import type { Fournisseur } from "@/types/fournisseur";
 
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import type { Fournisseur, FournisseurFormData } from "@/types/fournisseur";
-import FournisseursToolbar from "@/components/admin/fournisseurs/FournisseursToolbar";
-import FournisseursTable from "@/components/admin/fournisseurs/FournisseursTable";
-import FournisseurCard from "@/components/admin/fournisseurs/FournisseurCard";
-import FournisseurFormModal from "@/components/admin/fournisseurs/FournisseurFormModal";
-import ConfirmDialog from "@/components/ui/ConfirmDialog";
-
-interface FournisseursPageClientProps {
-    fournisseursInitiaux: Fournisseur[];
+interface FournisseursTableProps {
+    fournisseurs: Fournisseur[];
+    onEdit: (fournisseur: Fournisseur) => void;
+    onDelete: (fournisseur: Fournisseur) => void;
 }
 
-export default function FournisseursPageClient({
-    fournisseursInitiaux,
-}: FournisseursPageClientProps) {
-    const [fournisseurs, setFournisseurs] =
-        useState<Fournisseur[]>(fournisseursInitiaux);
-    const [recherche, setRecherche] = useState("");
-    const [vue, setVue] = useState<"table" | "grille">("table");
-    const [modalOuvert, setModalOuvert] = useState(false);
-    const [fournisseurAEditer, setFournisseurAEditer] =
-        useState<Fournisseur | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [fournisseurASupprimer, setFournisseurASupprimer] =
-        useState<Fournisseur | null>(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-
-    const fournisseursFiltres = useMemo(() => {
-        const terme = recherche.trim().toLowerCase();
-
-        if (!terme) {
-            return fournisseurs;
-        }
-
-        return fournisseurs.filter((fournisseur) =>
-            fournisseur.nom.toLowerCase().includes(terme)
-        );
-    }, [fournisseurs, recherche]);
-
-    const lireMessageErreur = async (response: Response) => {
-        try {
-            const data = await response.json();
-            return data.message || data.error || "Une erreur est survenue.";
-        } catch {
-            return "Une erreur est survenue.";
-        }
-    };
-
-    const handleOuvrirCreation = () => {
-        setFournisseurAEditer(null);
-        setModalOuvert(true);
-    };
-
-    const handleOuvrirEdition = (fournisseur: Fournisseur) => {
-        setFournisseurAEditer(fournisseur);
-        setModalOuvert(true);
-    };
-
-    const handleFermerModal = () => {
-        setModalOuvert(false);
-        setFournisseurAEditer(null);
-    };
-
-    const handleSubmitFormulaire = async (data: FournisseurFormData) => {
-        setIsSubmitting(true);
-
-        try {
-            const isEdition = Boolean(fournisseurAEditer);
-            const url = isEdition
-                ? `/api/fournisseurs/${fournisseurAEditer?.id}`
-                : "/api/fournisseurs";
-
-            const response = await fetch(url, {
-                method: isEdition ? "PATCH" : "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    nom: data.nom,
-                    email: data.email || undefined,
-                    telephone: data.telephone,
-                    adresse: data.adresse,
-                }),
-            });
-
-            if (!response.ok) {
-                const message = await lireMessageErreur(response);
-                toast.error(message);
-                return;
-            }
-
-            const result = await response.json();
-            const fournisseurSauvegarde: Fournisseur =
-                result.fournisseur ?? result;
-
-            setFournisseurs((prev) => {
-                if (isEdition) {
-                    return prev.map((fournisseur) =>
-                        fournisseur.id === fournisseurSauvegarde.id
-                            ? fournisseurSauvegarde
-                            : fournisseur
-                    );
-                }
-
-                return [fournisseurSauvegarde, ...prev];
-            });
-
-            toast.success(isEdition ? "Fournisseur modifié avec succès." : "Fournisseur créé avec succès.");
-            handleFermerModal();
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleOuvrirSuppression = (fournisseur: Fournisseur) => {
-        setFournisseurASupprimer(fournisseur);
-    };
-
-    const confirmSuppression = async () => {
-        if (!fournisseurASupprimer) return;
-
-        setIsDeleting(true);
-
-        try {
-            const response = await fetch(
-                `/api/fournisseurs/${fournisseurASupprimer.id}`,
-                {
-                    method: "DELETE",
-                }
-            );
-
-            if (!response.ok) {
-                const message = await lireMessageErreur(response);
-                toast.error(message);
-                return;
-            }
-
-            setFournisseurs((prev) =>
-                prev.filter(
-                    (fournisseur) => fournisseur.id !== fournisseurASupprimer.id
-                )
-            );
-            toast.success(`${fournisseurASupprimer.nom} a été supprimé avec succès.`);
-        } finally {
-            setIsDeleting(false);
-            setFournisseurASupprimer(null);
-        }
-    };
-
+export default function FournisseursTable({
+    fournisseurs,
+    onEdit,
+    onDelete,
+}: FournisseursTableProps) {
     return (
-        <div className="space-y-6">
-            <FournisseursToolbar
-                recherche={recherche}
-                onRechercheChange={setRecherche}
-                vue={vue}
-                onVueChange={setVue}
-                onNouveauFournisseur={handleOuvrirCreation}
-            />
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-175">
+                    <thead className="bg-muted/50 border-b border-border text-xs font-medium text-muted-foreground uppercase">
+                        <tr>
+                            <th className="py-3 px-6">Nom</th>
+                            <th className="py-3 px-6">Email</th>
+                            <th className="py-3 px-6">Téléphone</th>
+                            <th className="py-3 px-6">Adresse</th>
+                            <th className="py-3 px-6">Commandes</th>
+                            <th className="py-3 px-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
 
-            {vue === "table" ? (
-                <FournisseursTable
-                    fournisseurs={fournisseursFiltres}
-                    onEdit={handleOuvrirEdition}
-                    onDelete={handleOuvrirSuppression}
-                />
-            ) : fournisseursFiltres.length > 0 ? (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {fournisseursFiltres.map((fournisseur) => (
-                        <FournisseurCard
-                            key={fournisseur.id}
-                            fournisseur={fournisseur}
-                            onEdit={handleOuvrirEdition}
-                            onDelete={handleOuvrirSuppression}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="rounded-lg border border-border bg-card px-6 py-12 text-center text-sm text-muted-foreground">
-                    Aucun fournisseur trouvé
-                </div>
-            )}
+                    <tbody>
+                        {fournisseurs.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="py-12 px-6 text-center text-muted-foreground">
+                                    <div className="flex flex-col items-center gap-3">
+                                        <Truck className="h-10 w-10 opacity-50" aria-hidden="true" />
+                                        <span className="text-sm font-medium">Aucun fournisseur trouvé</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : (
+                            fournisseurs.map((fournisseur) => {
+                                const commandes = fournisseur._count?.commandeFournisseurs ?? 0;
+                                const cannotDelete = commandes > 0;
 
-            <FournisseurFormModal
-                key={fournisseurAEditer?.id ?? "nouveau"}
-                isOpen={modalOuvert}
-                onClose={handleFermerModal}
-                onSubmit={handleSubmitFormulaire}
-                fournisseurAEditer={fournisseurAEditer}
-                isSubmitting={isSubmitting}
-            />
+                                return (
+                                    <tr
+                                        key={fournisseur.id}
+                                        className="border-b border-border transition-colors hover:bg-muted/30"
+                                    >
+                                        <td className="py-3 px-6 font-semibold text-sm text-foreground whitespace-nowrap">
+                                            {fournisseur.nom}
+                                        </td>
 
-            <ConfirmDialog
-                isOpen={Boolean(fournisseurASupprimer)}
-                onCancel={() => setFournisseurASupprimer(null)}
-                onConfirm={confirmSuppression}
-                title="Supprimer le fournisseur"
-                message={`Êtes-vous sûr de vouloir supprimer le fournisseur "${fournisseurASupprimer?.nom ?? ""}" ? Cette action est irréversible.`}
-                variant="danger"
-                isConfirming={isDeleting}
-            />
+                                        <td className="py-3 px-6 max-w-xs truncate text-sm text-muted-foreground">
+                                            {fournisseur.email ?? "—"}
+                                        </td>
+
+                                        <td className="py-3 px-6 text-sm text-muted-foreground whitespace-nowrap">
+                                            {fournisseur.telephone ?? "—"}
+                                        </td>
+
+                                        <td className="py-3 px-6 max-w-md text-sm text-muted-foreground">
+                                            <span className="line-clamp-2">{fournisseur.adresse ?? "—"}</span>
+                                        </td>
+
+                                        <td className="py-3 px-6 text-sm text-muted-foreground tabular-nums whitespace-nowrap">
+                                            {commandes}
+                                        </td>
+
+                                        <td className="py-3 px-6">
+                                            <div className="flex justify-end gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onEdit(fournisseur)}
+                                                    aria-label="Modifier"
+                                                    title="Modifier"
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                >
+                                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onDelete(fournisseur)}
+                                                    disabled={cannotDelete}
+                                                    title={cannotDelete ? "Impossible de supprimer : commandes liées" : "Supprimer"}
+                                                    aria-label="Supprimer"
+                                                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
+                                                >
+                                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }
