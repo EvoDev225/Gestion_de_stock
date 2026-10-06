@@ -12,6 +12,7 @@ interface ProductsToolbarProps {
     onStatusChange: (status: "tous" | "actifs" | "archives") => void;
     view: "table" | "grille";
     onViewChange: (view: "table" | "grille") => void;
+    isMobile?: boolean;
 }
 
 export default function ProductsToolbar({
@@ -24,6 +25,7 @@ export default function ProductsToolbar({
     onStatusChange,
     view,
     onViewChange,
+    isMobile, // ✅ ICI
 }: ProductsToolbarProps) {
     return (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4">
@@ -69,33 +71,37 @@ export default function ProductsToolbar({
                 </select>
             </div>
 
-            {/* ── Groupe droite : Toggle Vue ── */}
-            <div className="flex items-center rounded-lg border border-border bg-muted p-1">
-                <button
-                    type="button"
-                    onClick={() => onViewChange("table")}
-                    className={`inline-flex items-center justify-center rounded-md p-2 transition-colors ${view === "table"
-                            ? "bg-card shadow-sm text-primary"
-                            : "text-muted-foreground hover:text-primary"
+            {/* ── Groupe droite : Toggle Vue (masqué sur mobile) ── */}
+            {!isMobile && (
+                <div className="flex items-center rounded-lg border border-border bg-muted p-1">
+                    <button
+                        type="button"
+                        onClick={() => onViewChange("table")}
+                        className={`inline-flex items-center justify-center rounded-md p-2 transition-colors ${
+                            view === "table"
+                                ? "bg-card shadow-sm text-primary"
+                                : "text-muted-foreground hover:text-primary"
                         }`}
-                    aria-label="Vue tableau"
-                    aria-pressed={view === "table"}
-                >
-                    <LayoutList className="h-4 w-4" aria-hidden="true" />
-                </button>
-                <button
-                    type="button"
-                    onClick={() => onViewChange("grille")}
-                    className={`inline-flex items-center justify-center rounded-md p-2 transition-colors ${view === "grille"
-                            ? "bg-card shadow-sm text-primary"
-                            : "text-muted-foreground hover:text-primary"
+                        aria-label="Vue tableau"
+                        aria-pressed={view === "table"}
+                    >
+                        <LayoutList className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onViewChange("grille")}
+                        className={`inline-flex items-center justify-center rounded-md p-2 transition-colors ${
+                            view === "grille"
+                                ? "bg-card shadow-sm text-primary"
+                                : "text-muted-foreground hover:text-primary"
                         }`}
-                    aria-label="Vue grille"
-                    aria-pressed={view === "grille"}
-                >
-                    <LayoutGrid className="h-4 w-4" aria-hidden="true" />
-                </button>
-            </div>
+                        aria-label="Vue grille"
+                        aria-pressed={view === "grille"}
+                    >
+                        <LayoutGrid className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
