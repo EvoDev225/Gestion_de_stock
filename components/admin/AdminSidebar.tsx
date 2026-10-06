@@ -134,13 +134,11 @@ export default function AdminSidebar({
             )}
 
             <aside
-                // ✅ CORRIGÉ : h-dvh au lieu de h-screen (s'adapte à la barre Chrome mobile)
-                // Fallback h-screen pour les vieux navigateurs qui ne supportent pas dvh
-                className={`fixed left-0 top-0 h-screen  bg-card shadow-[24px_0_48px_rgba(26,26,26,0.04)] flex flex-col z-50 border-r border-border
-                    transition-transform duration-300 ease-in-out
-                    w-72 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-                    md:translate-x-0 md:w-20 lg:w-64`}
-            >
+    className={`fixed left-0 top-0 inset-y-0 bg-card shadow-[24px_0_48px_rgba(26,26,26,0.04)] flex flex-col z-50 border-r border-border
+        transition-transform duration-300 ease-in-out
+        w-72 ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0 md:w-20 lg:w-64`}
+>
                 {/* Logo */}
                 <div className="h-20 flex items-center justify-between px-4 shrink-0 overflow-hidden">
                     <span className="inline md:hidden lg:inline text-xl font-bold text-primary whitespace-nowrap">
