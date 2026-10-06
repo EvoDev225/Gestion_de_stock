@@ -138,7 +138,7 @@ export default function UtilisateursPageClient({
             <ConfirmDialog
                 isOpen={utilisateurAConfirmer !== null}
                 title="Désactiver cet utilisateur ?"
-                message={
+                description={
                     utilisateurAConfirmer
                         ? `Le compte de ${utilisateurAConfirmer.nom} sera désactivé et ne pourra plus se connecter.`
                         : ""
@@ -148,7 +148,7 @@ export default function UtilisateursPageClient({
                 variant="danger"
                 isConfirming={isConfirming}
                 onConfirm={handleConfirmerDesactivation}
-                onCancel={() => setUtilisateurAConfirmer(null)}
+                onClose={() => setUtilisateurAConfirmer(null)}
             />
         </div>
     );
