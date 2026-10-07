@@ -195,4 +195,4 @@ Projet de démonstration — usage pédagogique.
 
 ---
 
-**Développé avec ❤️ par [Ton Nom / EvoDev225]**
+**Développé avec ❤️ par [Kambou Oziel / EvoDev225]**
