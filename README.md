@@ -10,8 +10,8 @@
 
 | Rôle | Email | Mot de passe |
 |---|---|---|
-| Administrateur | `admin@corticalevo.com` | `mdpAdmin_01` |
-| Employé | `employe@corticalevo.com` | `mdpEmp_01` |
+| Administrateur | `admin@gmail.com` | `mdpAdmin_01` |
+| Employé | `employe@gmail.com` | `mdpEmp_01` |
 
 > ⚠️ La base de données est **réinitialisée automatiquement chaque vendredi à 00h00 (UTC)** par un cron Vercel. Les comptes ci-dessus sont recréés automatiquement.
 
