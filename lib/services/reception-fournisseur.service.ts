@@ -16,6 +16,7 @@ export async function listerReceptions(commandeFournisseurId?: string) {
         orderBy: { dateReception: "desc" },
     });
 }
+
 export async function creerReception(data: {
     commandeFournisseurId: string;
     utilisateurId: string;
@@ -32,7 +33,14 @@ export async function creerReception(data: {
     return prisma.$transaction(async (tx) => {
         const commande = await tx.commandeFournisseur.findUnique({
             where: { id: data.commandeFournisseurId },
-            include: { ligneCommandeFournisseur: { include: { lignesReception: true } } },
+            include: {
+                ligneCommandeFournisseur: {
+                    include: {
+                        lignesReception: true,
+                        produit: { select: { nom: true, _count: { select: { variantes: true } } } },
+                    },
+                },
+            },
         });
 
         if (!commande) {
@@ -91,14 +99,19 @@ export async function creerReception(data: {
                 (lc) => lc.id === ligne.ligneCommandeFournisseurId
             )!;
 
-            const numeroLot = await genererNumeroLot();
+            if (ligneCommande.produit._count.variantes > 0 && !ligneCommande.varianteId) {
+                throw new Error(
+                    `La ligne de « ${ligneCommande.produit.nom} » n'a pas de variante : recréez la commande en choisissant la variante`
+                );
+            }
 
             const lot = await tx.lot.create({
                 data: {
-                    numeroLot,
+                    numeroLot: genererNumeroLot(),
                     quantite: ligne.quantiteRecue,
                     dateReception: new Date(),
-                    produitId: ligneCommande.produitId,
+                    produitId: ligneCommande.varianteId ? undefined : ligneCommande.produitId,
+                    varianteId: ligneCommande.varianteId ?? undefined,
                     receptionFournisseurId: reception.id,
                 },
             });
@@ -106,6 +119,7 @@ export async function creerReception(data: {
             await tx.mouvementStock.create({
                 data: {
                     produitId: ligneCommande.produitId,
+                    varianteId: ligneCommande.varianteId,
                     lotId: lot.id,
                     typeMouvement: "ENTREE",
                     quantite: ligne.quantiteRecue,
