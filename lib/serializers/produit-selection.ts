@@ -1,5 +1,3 @@
-import type { Prisma } from "@/generated/prisma/client";
-
 /**
  * Version allégée d'un produit, utilisée uniquement pour peupler une liste
  * de sélection (ex. choix d'un produit dans une commande fournisseur).
@@ -19,24 +17,29 @@ export interface ProduitSelection {
 }
 
 /**
- * Le type d'entrée correspond au résultat brut de listerProduits()
- * (lib/services/produit.service.ts), qui retourne les produits avec
- * include: { categorie: true, variantes: true }. On ignore ici tous les champs non
- * nécessaires à une liste de sélection (prix, stock, description, etc.).
+ * Le type d'entrée est volontairement minimal : il décrit uniquement les
+ * champs lus ici. Ainsi, tout résultat de listerProduits() est accepté
+ * (avec ou sans include des variantes), sans dépendre du type généré par
+ * Prisma. Les champs non nécessaires à une liste de sélection (prix, stock,
+ * description, etc.) sont ignorés.
  */
-type ProduitPrisma = Prisma.ProduitGetPayload<{
-    include: {
-        categorie: true;
-        variantes: { select: { id: true; nomVariante: true; skuVariante: true } };
-    };
-}>;
+interface ProduitSource {
+    id: string;
+    nom: string;
+    sku: string;
+    variantes?: {
+        id: string;
+        nomVariante: string;
+        skuVariante: string;
+    }[];
+}
 
-export function serialiserProduitPourSelection(produit: ProduitPrisma): ProduitSelection {
+export function serialiserProduitPourSelection(produit: ProduitSource): ProduitSelection {
     return {
         id: produit.id,
         nom: produit.nom,
         sku: produit.sku,
-        variantes: produit.variantes.map((v) => ({
+        variantes: (produit.variantes ?? []).map((v) => ({
             id: v.id,
             nomVariante: v.nomVariante,
             skuVariante: v.skuVariante,
@@ -44,6 +47,6 @@ export function serialiserProduitPourSelection(produit: ProduitPrisma): ProduitS
     };
 }
 
-export function serialiserProduitsPourSelection(produits: ProduitPrisma[]): ProduitSelection[] {
+export function serialiserProduitsPourSelection(produits: ProduitSource[]): ProduitSelection[] {
     return produits.map(serialiserProduitPourSelection);
 }

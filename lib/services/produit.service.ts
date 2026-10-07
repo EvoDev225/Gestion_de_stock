@@ -21,7 +21,9 @@ async function genererSkuProduit(nom: string): Promise<string> {
 }
 export async function listerProduits() {
     return prisma.produit.findMany({
-        include: { categorie: true },
+        include: { categorie: true ,
+          variantes: { select: { id: true, nomVariante: true, skuVariante: true }}
+        },
         orderBy: { nom: "asc" },
     });
 }
