@@ -16,6 +16,7 @@ const schemaCreationCommandeFournisseur = z
           produitId: z.string().min(1),
           quantiteCommande: z.coerce.number().int().min(1),
           prixAchatUnitaire: z.coerce.number().int().min(0),
+          varianteId: z.string().min(1).optional(),
         })
       )
       .min(1, "Au moins une ligne est requise"),

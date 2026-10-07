@@ -11,6 +11,7 @@ const schemaAjoutLigneCommande = z
     produitId: z.string().min(1),
     quantiteCommande: z.coerce.number().int().min(1),
     prixAchatUnitaire: z.coerce.number().int().min(1),
+    varianteId: z.string().min(1).optional(),
   })
   .strip();
 
@@ -32,17 +33,17 @@ export async function POST(
         return validation.erreur;
     }
 
-    const { produitId, quantiteCommande, prixAchatUnitaire } = validation.donnees;
+    const { produitId, quantiteCommande, prixAchatUnitaire, varianteId } = validation.donnees;
 
     try {
         const ligne = await ajouterLigneCommande(
             validationId.donnees,
-            { produitId, quantiteCommande, prixAchatUnitaire },
+            { produitId, quantiteCommande, prixAchatUnitaire, varianteId },
             acces.session.id
         );
         return NextResponse.json(ligne, { status: 201 });
-    } catch (error: any) {
-        if (error.code === "P2003") {
+    } catch (error) {
+        if (error instanceof Error && "code" in error && (error as { code: string }).code === "P2003") {
             return NextResponse.json({ error: "Produit introuvable" }, { status: 400 });
         }
         return NextResponse.json({ error: (error as Error).message }, { status: 400 });
