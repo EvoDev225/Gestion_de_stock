@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 // import { Prisma } from '../../generated/prisma/client';
+import { calculerStockPourListeProduits } from "@/lib/services/stock.service";
 
 
 const SEUIL_JOURS_PEREMPTION = 7;
@@ -72,11 +73,17 @@ export interface DernierEcartInventaire {
 export async function obtenirValeurStock(): Promise<number> {
     const produits = await prisma.produit.findMany({
         where: { archive: false },
-        select: { quantiteStock: true, prixAchat: true },
+        select: {
+            id: true,
+            prixAchat: true,
+            variantes: { select: { id: true } },
+        },
     });
 
+    const stocks = await calculerStockPourListeProduits(produits);
+
     const total = produits.reduce(
-        (acc, p) => acc + p.quantiteStock * Number(p.prixAchat),
+        (acc, p) => acc + (stocks.get(p.id) ?? 0) * Number(p.prixAchat),
         0
     );
 
@@ -87,17 +94,20 @@ export async function obtenirRepartitionParCategorie(): Promise<{ nom: string; p
     const produits = await prisma.produit.findMany({
         where: { archive: false },
         select: {
-            quantiteStock: true,
+            id: true,
             prixAchat: true,
             categorie: { select: { nom: true } },
+            variantes: { select: { id: true } },
         },
     });
+
+    const stocks = await calculerStockPourListeProduits(produits);
 
     const valeursParCategorie = new Map<string, number>();
 
     for (const produit of produits) {
         const nomCategorie = produit.categorie?.nom ?? "Sans catégorie";
-        const valeur = produit.quantiteStock * Number(produit.prixAchat);
+        const valeur = (stocks.get(produit.id) ?? 0) * Number(produit.prixAchat);
         valeursParCategorie.set(
             nomCategorie,
             (valeursParCategorie.get(nomCategorie) ?? 0) + valeur
@@ -118,10 +128,22 @@ export async function obtenirRepartitionParCategorie(): Promise<{ nom: string; p
 }
 
 export async function obtenirProduitsASurveiller(): Promise<ProduitAlerte[]> {
-    // Bug corrigé : Utilisation de $queryRaw au lieu d'une comparaison directe de colonnes non supportée dans .findMany()
-    const produitsSeuilBas = await prisma.$queryRaw<
-        { id: string; nom: string; quantiteStock: number }[]
-    >`SELECT id, nom, "quantiteStock" FROM "Produit" WHERE archive = false AND "quantiteStock" <= "seuilMinimum"`;
+    const produitsActifs = await prisma.produit.findMany({
+        where: { archive: false },
+        select: {
+            id: true,
+            nom: true,
+            seuilMinimum: true,
+            variantes: { select: { id: true } },
+        },
+    });
+
+    // Stock réel = Σ des lots (Produit.quantiteStock n'est plus utilisé)
+    const stocks = await calculerStockPourListeProduits(produitsActifs);
+
+    const produitsSeuilBas = produitsActifs
+        .map((p) => ({ nom: p.nom, seuilMinimum: p.seuilMinimum, stock: stocks.get(p.id) ?? 0 }))
+        .filter((p) => p.stock <= p.seuilMinimum);
 
     const dateLimite = new Date();
     dateLimite.setDate(dateLimite.getDate() + SEUIL_JOURS_PEREMPTION);
@@ -141,13 +163,13 @@ export async function obtenirProduitsASurveiller(): Promise<ProduitAlerte[]> {
 
     const alertesSeuilBas: ProduitAlerte[] = produitsSeuilBas.map((p) => ({
         nom: p.nom,
-        info: `${p.quantiteStock} unité(s)`,
+        info: `${p.stock} unité(s)`,
         statut: "seuil_bas" as const,
     }));
 
     const alertesPeremption: ProduitAlerte[] = lotsProchesPeremption.map((lot) => {
         const jours = Math.ceil(
-            (lot.dateExpiration.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+            (lot.dateExpiration!.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
         );
         return {
             nom: lot.produit?.nom ?? lot.variante?.nomVariante ?? "Produit",
@@ -477,9 +499,14 @@ export async function obtenirDerniersEcartsInventaire(limite: number = 10): Prom
  * Nombre de produits actifs actuellement suivis en stock
  */
 export async function obtenirNombreProduitsEnStock(): Promise<number> {
-    return prisma.produit.count({
+    const produits = await prisma.produit.findMany({
         where: { archive: false },
+        select: { id: true, variantes: { select: { id: true } } },
     });
+
+    const stocks = await calculerStockPourListeProduits(produits);
+
+    return produits.filter((p) => (stocks.get(p.id) ?? 0) > 0).length;
 }
 
 /**
