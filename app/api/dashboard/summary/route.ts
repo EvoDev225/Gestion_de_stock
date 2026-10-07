@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
         stats: {
             produitsEnStock,
-            alertesRupture: alertes.length,
+            alertesRupture: alertes.filter((a) => a.statut === "seuil_bas").length,
             ventesDuMois,
             commandesEnAttente,
         },
