@@ -6,7 +6,7 @@ export async function listerCommandesFournisseur() {
     return prisma.commandeFournisseur.findMany({
         include: {
             fournisseur: true,
-            ligneCommandeFournisseur: { include: { produit: true } },
+            ligneCommandeFournisseur: { include: { produit: true, variante: true } },
         },
         orderBy: { dateCommande: "desc" },
     });
@@ -20,6 +20,7 @@ export async function obtenirCommandeFournisseurParId(id: string) {
             ligneCommandeFournisseur: {
                 include: {
                     produit: true,
+                    variante: true,
                     lignesReception: true,
                 },
             },
@@ -40,13 +41,17 @@ export async function obtenirCommandeFournisseurParId(id: string) {
 export async function creerCommandeFournisseur(data: {
     fournisseurId: string;
     utilisateurId: string;
-    lignes: { produitId: string; quantiteCommande: number; prixAchatUnitaire: number }[];
+    lignes: { produitId: string; quantiteCommande: number; prixAchatUnitaire: number; varianteId?: string }[];
 }) {
     if (data.lignes.length === 0) {
         throw new Error("Une commande doit contenir au moins une ligne");
     }
 
     return prisma.$transaction(async (tx) => {
+        for (const ligne of data.lignes) {
+            await verifierCibleLigne(tx, ligne.produitId, ligne.varianteId);
+        }
+
         const commande = await tx.commandeFournisseur.create({
             data: {
                 fournisseurId: data.fournisseurId,
@@ -58,12 +63,13 @@ export async function creerCommandeFournisseur(data: {
                         produitId: ligne.produitId,
                         quantiteCommande: ligne.quantiteCommande,
                         prixAchatUnitaire: ligne.prixAchatUnitaire,
+                        varianteId: ligne.varianteId ?? null,
                     })),
                 },
             },
             include: {
                 fournisseur: true,
-                ligneCommandeFournisseur: { include: { produit: true } },
+                ligneCommandeFournisseur: { include: { produit: true, variante: true } },
             },
         });
 
@@ -120,9 +126,32 @@ async function verifierModifiable(tx: Prisma.TransactionClient, commandeId: stri
     return commande;
 }
 
+async function verifierCibleLigne(
+    tx: Prisma.TransactionClient,
+    produitId: string,
+    varianteId?: string | null
+) {
+    const produit = await tx.produit.findUnique({
+        where: { id: produitId },
+        include: { variantes: { select: { id: true } } },
+    });
+    if (!produit) throw new Error("Produit introuvable");
+
+    if (produit.variantes.length > 0) {
+        if (!varianteId) {
+            throw new Error(`Le produit « ${produit.nom} » a des variantes : choisissez la variante à commander`);
+        }
+        if (!produit.variantes.some((v) => v.id === varianteId)) {
+            throw new Error("Cette variante n'appartient pas au produit");
+        }
+    } else if (varianteId) {
+        throw new Error("Ce produit n'a pas de variantes");
+    }
+}
+
 export async function ajouterLigneCommande(
     commandeId: string,
-    data: { produitId: string; quantiteCommande: number; prixAchatUnitaire: number },
+    data: { produitId: string; quantiteCommande: number; prixAchatUnitaire: number; varianteId?: string },
     utilisateurId: string
 ) {
     if (data.quantiteCommande <= 0) {
@@ -134,6 +163,7 @@ export async function ajouterLigneCommande(
 
     return prisma.$transaction(async (tx) => {
         await verifierModifiable(tx, commandeId);
+        await verifierCibleLigne(tx, data.produitId, data.varianteId);
 
         const ligne = await tx.ligneCommandeFournisseur.create({
             data: {
@@ -141,8 +171,9 @@ export async function ajouterLigneCommande(
                 produitId: data.produitId,
                 quantiteCommande: data.quantiteCommande,
                 prixAchatUnitaire: data.prixAchatUnitaire,
+                varianteId: data.varianteId ?? null,
             },
-            include: { produit: true },
+            include: { produit: true, variante: true },
         });
 
         await enregistrerActivite({
@@ -182,7 +213,7 @@ export async function modifierLigneCommande(
         const ligne = await tx.ligneCommandeFournisseur.update({
             where: { id: ligneId },
             data,
-            include: { produit: true },
+            include: { produit: true, variante: true },
         });
 
         await enregistrerActivite({
