@@ -11,21 +11,36 @@ export interface ProduitSelection {
     id: string;
     nom: string;
     sku: string;
+    variantes: {
+        id: string;
+        nomVariante: string;
+        skuVariante: string;
+    }[];
 }
 
 /**
  * Le type d'entrée correspond au résultat brut de listerProduits()
  * (lib/services/produit.service.ts), qui retourne les produits avec
- * include: { categorie: true }. On ignore ici tous les champs non
+ * include: { categorie: true, variantes: true }. On ignore ici tous les champs non
  * nécessaires à une liste de sélection (prix, stock, description, etc.).
  */
-type ProduitPrisma = Prisma.ProduitGetPayload<{ include: { categorie: true } }>;
+type ProduitPrisma = Prisma.ProduitGetPayload<{
+    include: {
+        categorie: true;
+        variantes: { select: { id: true; nomVariante: true; skuVariante: true } };
+    };
+}>;
 
 export function serialiserProduitPourSelection(produit: ProduitPrisma): ProduitSelection {
     return {
         id: produit.id,
         nom: produit.nom,
         sku: produit.sku,
+        variantes: produit.variantes.map((v) => ({
+            id: v.id,
+            nomVariante: v.nomVariante,
+            skuVariante: v.skuVariante,
+        })),
     };
 }
 

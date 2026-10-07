@@ -10,6 +10,11 @@ export interface Produit {
     id: string;
     nom: string;
     sku: string;
+    variantes?: {
+        id: string;
+        nomVariante: string;
+        skuVariante: string;
+    }[];
 }
 
 export interface LigneCommandeFournisseur {
@@ -20,6 +25,12 @@ export interface LigneCommandeFournisseur {
     commandeFournisseurId: string;
     produitId: string;
     produit: Produit;
+    varianteId?: string | null;
+    variante?: {
+        id: string;
+        nomVariante: string;
+        skuVariante: string;
+    } | null;
 }
 
 export type StatutCommande = "EN_ATTENTE" | "ENVOYEE" | "RECUE_PARTIELLE" | "RECUE";
@@ -35,12 +46,13 @@ export interface CommandeFournisseur {
 }
 
 export interface NouvelleLigneCommandeData {
-  produitId: string;
-  quantiteCommande: number;
-  prixAchatUnitaire: number;
+    produitId: string;
+    quantiteCommande: number;
+    prixAchatUnitaire: number;
+    varianteId?: string;
 }
 
 export interface NouvelleCommandeData {
-  fournisseurId: string;
-  lignes: NouvelleLigneCommandeData[];
+    fournisseurId: string;
+    lignes: NouvelleLigneCommandeData[];
 }

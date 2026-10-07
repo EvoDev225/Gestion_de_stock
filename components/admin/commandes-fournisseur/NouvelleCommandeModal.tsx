@@ -39,16 +39,17 @@ export default function NouvelleCommandeModal({
     const [fournisseurId, setFournisseurId] = useState("");
     const [lignes, setLignes] = useState<NouvelleLigneCommandeData[]>([{ ...emptyLigne }]);
     const [errors, setErrors] = useState<{ fournisseur?: string; lignes?: string }>({});
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+    if (isOpen && !prevIsOpen) {
+    setPrevIsOpen(true);
+    setFournisseurId("");
+    setLignes([{ ...emptyLigne }]);
+    setErrors({});
+}
 
-    const resetForm = useCallback(() => {
-        setFournisseurId("");
-        setLignes([{ ...emptyLigne }]);
-        setErrors({});
-    }, []);
-
-    useEffect(() => {
-        if (isOpen) resetForm();
-    }, [isOpen, resetForm]);
+if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+}
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -71,7 +72,13 @@ export default function NouvelleCommandeModal({
         setLignes((prev) =>
             prev.map((ligne, i) => {
                 if (i !== index) return ligne;
-                if (field === "produitId") return { ...ligne, produitId: value as string };
+                if (field === "produitId") {
+                    // Réinitialiser la variante quand on change de produit
+                    return { ...ligne, produitId: value as string, varianteId: undefined };
+                }
+                if (field === "varianteId") {
+                    return { ...ligne, varianteId: value as string };
+                }
                 return { ...ligne, [field]: Number(value) };
             })
         );
@@ -88,12 +95,55 @@ export default function NouvelleCommandeModal({
 
         if (!fournisseurId) newErrors.fournisseur = "Veuillez sélectionner un fournisseur.";
 
-        const validLignes = lignes.filter(
-            (l) => l.produitId && Number(l.quantiteCommande) > 0 && Number(l.prixAchatUnitaire) > 0
-        );
+        // Valider chaque ligne individuellement
+        const lignesInvalides: string[] = [];
+        const validLignes: NouvelleLigneCommandeData[] = [];
 
-        if (validLignes.length === 0) {
+        for (let i = 0; i < lignes.length; i++) {
+            const ligne = lignes[i];
+            const produit = produits.find((p) => p.id === ligne.produitId);
+
+            // Vérifier que le produit est sélectionné
+            if (!ligne.produitId) {
+                continue; // Ligne vide, on l'ignore
+            }
+
+            // Vérifier quantité et prix
+            if (Number(ligne.quantiteCommande) <= 0 || Number(ligne.prixAchatUnitaire) <= 0) {
+                continue; // Ligne invalide, on l'ignore
+            }
+
+            // Vérifier la variante si le produit en a
+            if (produit && produit.variantes && produit.variantes.length > 0) {
+                if (!ligne.varianteId) {
+                    lignesInvalides.push(
+                        `Ligne ${i + 1} : veuillez choisir une variante pour le produit « ${produit.nom} ».`
+                    );
+                    continue;
+                }
+            }
+
+            // Ligne valide
+            const ligneValide: NouvelleLigneCommandeData = {
+                produitId: ligne.produitId,
+                quantiteCommande: Number(ligne.quantiteCommande),
+                prixAchatUnitaire: Number(ligne.prixAchatUnitaire),
+            };
+
+            // Ajouter varianteId uniquement si le produit a des variantes
+            if (produit && produit.variantes && produit.variantes.length > 0 && ligne.varianteId) {
+                ligneValide.varianteId = ligne.varianteId;
+            }
+
+            validLignes.push(ligneValide);
+        }
+
+        if (validLignes.length === 0 && lignesInvalides.length === 0) {
             newErrors.lignes = "Ajoutez au moins une ligne valide (produit, quantité > 0, prix > 0).";
+        }
+
+        if (lignesInvalides.length > 0) {
+            newErrors.lignes = lignesInvalides.join(" ");
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -158,70 +208,95 @@ export default function NouvelleCommandeModal({
                         {errors.lignes && <p className="mb-3 text-sm text-destructive">{errors.lignes}</p>}
 
                         <div className="space-y-4">
-                            {lignes.map((ligne, index) => (
-                                <div
-                                    key={index}
-                                    className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end p-4 bg-muted/30 rounded-lg border border-border"
-                                >
-                                    <div className="sm:col-span-5">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1">Produit</label>
-                                        <select
-                                            value={ligne.produitId}
-                                            onChange={(e) => updateLigne(index, "produitId", e.target.value)}
-                                            className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
-                                        >
-                                            <option value="">Sélectionner</option>
-                                            {produits.map((p) => (
-                                                <option key={p.id} value={p.id}>{p.nom} ({p.sku})</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                            {lignes.map((ligne, index) => {
+                                const produit = produits.find((p) => p.id === ligne.produitId);
+                                const aVariantes = produit && produit.variantes && produit.variantes.length > 0;
 
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1">Quantité</label>
-                                        <input
-                                            type="number"
-                                            min={1}
-                                            value={ligne.quantiteCommande || ""}
-                                            onChange={(e) => updateLigne(index, "quantiteCommande", e.target.value)}
-                                            placeholder="0"
-                                            className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                return (
+                                    <div
+                                        key={index}
+                                        className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end p-4 bg-muted/30 rounded-lg border border-border"
+                                    >
+                                        <div className={aVariantes ? "sm:col-span-3" : "sm:col-span-5"}>
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1">Produit</label>
+                                            <select
+                                                value={ligne.produitId}
+                                                onChange={(e) => updateLigne(index, "produitId", e.target.value)}
+                                                className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
+                                            >
+                                                <option value="">Sélectionner</option>
+                                                {produits.map((p) => (
+                                                    <option key={p.id} value={p.id}>{p.nom} ({p.sku})</option>
+                                                ))}
+                                            </select>
+                                        </div>
 
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1">Prix unitaire</label>
-                                        <input
-                                            type="number"
-                                            min={0.01}
-                                            step={0.01}
-                                            value={ligne.prixAchatUnitaire || ""}
-                                            onChange={(e) => updateLigne(index, "prixAchatUnitaire", e.target.value)}
-                                            placeholder="0.00"
-                                            className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
-                                        />
-                                    </div>
+                                        {aVariantes && (
+                                            <div className="sm:col-span-2">
+                                                <label className="block text-xs font-medium text-muted-foreground mb-1">
+                                                    Variante <span className="text-destructive">*</span>
+                                                </label>
+                                                <select
+                                                    value={ligne.varianteId || ""}
+                                                    onChange={(e) => updateLigne(index, "varianteId", e.target.value)}
+                                                    className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
+                                                >
+                                                    <option value="">Sélectionner</option>
+                                                    {produit!.variantes!.map((v) => (
+                                                        <option key={v.id} value={v.id}>
+                                                            {v.nomVariante} ({v.skuVariante})
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        )}
 
-                                    <div className="sm:col-span-2">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1">Total</label>
-                                        <p className="text-sm font-semibold text-foreground pt-2">
-                                            {formatMontant((Number(ligne.quantiteCommande) || 0) * (Number(ligne.prixAchatUnitaire) || 0))}
-                                        </p>
-                                    </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1">Quantité</label>
+                                            <input
+                                                type="number"
+                                                min={1}
+                                                value={ligne.quantiteCommande || ""}
+                                                onChange={(e) => updateLigne(index, "quantiteCommande", e.target.value)}
+                                                placeholder="0"
+                                                className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
+                                            />
+                                        </div>
 
-                                    <div className="sm:col-span-1 flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeLigne(index)}
-                                            disabled={lignes.length === 1}
-                                            title={lignes.length === 1 ? "Impossible de supprimer la seule ligne" : "Supprimer la ligne"}
-                                            className="rounded p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
-                                        >
-                                            <Trash2 className="h-4 w-4" aria-hidden="true" />
-                                        </button>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1">Prix unitaire</label>
+                                            <input
+                                                type="number"
+                                                min={0.01}
+                                                step={0.01}
+                                                value={ligne.prixAchatUnitaire || ""}
+                                                onChange={(e) => updateLigne(index, "prixAchatUnitaire", e.target.value)}
+                                                placeholder="0.00"
+                                                className="block w-full rounded-lg border border-border bg-background text-foreground text-sm p-2 focus:border-primary focus:ring-primary"
+                                            />
+                                        </div>
+
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-xs font-medium text-muted-foreground mb-1">Total</label>
+                                            <p className="text-sm font-semibold text-foreground pt-2">
+                                                {formatMontant((Number(ligne.quantiteCommande) || 0) * (Number(ligne.prixAchatUnitaire) || 0))}
+                                            </p>
+                                        </div>
+
+                                        <div className="sm:col-span-1 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeLigne(index)}
+                                                disabled={lignes.length === 1}
+                                                title={lignes.length === 1 ? "Impossible de supprimer la seule ligne" : "Supprimer la ligne"}
+                                                className="rounded p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-30 disabled:cursor-not-allowed"
+                                            >
+                                                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
 
