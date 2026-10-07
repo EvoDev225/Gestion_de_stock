@@ -39,6 +39,7 @@ enum StatutVente {
   VALIDEE
   ANNULEE
 }
+
 enum ModePaiement {
   TOTAL
   CREDIT
@@ -63,8 +64,8 @@ model Utilisateur {
   retours               Retour[]
   ventes                Vente[]
   journalActivites      JournalActivite[]
-  inventairesLances  Inventaire[] @relation("InventaireLanceur")
-  inventairesValides Inventaire[] @relation("InventaireValidateur")
+  inventairesLances     Inventaire[]           @relation("InventaireLanceur")
+  inventairesValides    Inventaire[]           @relation("InventaireValidateur")
   commandesFournisseur  CommandeFournisseur[]
   receptionsFournisseur ReceptionFournisseur[]
   rapportsActivite      RapportActivite[]
@@ -108,19 +109,20 @@ model Produit {
   ligneVentes               LigneVente[]
   categorieId               String?
   categorie                 Categorie?                 @relation(fields: [categorieId], references: [id], onDelete: SetNull)
-} 
+}
 
 model Variante {
-  id               String            @id @default(uuid())
-  nomVariante      String
-  skuVariante      String            @unique
-  produitId        String
-  produit          Produit           @relation(fields: [produitId], references: [id], onDelete: Cascade)
-  lots             Lot[]
-  ligneVentes      LigneVente[]
-  lignesInventaire LigneInventaire[]
-  mouvementStocks  MouvementStock[]
-  lignesRetour     LigneRetour[]
+  id                        String                     @id @default(uuid())
+  nomVariante               String
+  skuVariante               String                     @unique
+  produitId                 String
+  produit                   Produit                    @relation(fields: [produitId], references: [id], onDelete: Cascade)
+  lots                      Lot[]
+  ligneVentes               LigneVente[]
+  lignesInventaire          LigneInventaire[]
+  mouvementStocks           MouvementStock[]
+  lignesRetour              LigneRetour[]
+  lignesCommandeFournisseur LigneCommandeFournisseur[]
 }
 
 model Lot {
@@ -131,7 +133,7 @@ model Lot {
   dateReception          DateTime
   produitId              String?
   varianteId             String?
-  receptionFournisseurId String?               // ← ajouté
+  receptionFournisseurId String? // ← ajouté
   mouvementStocks        MouvementStock[]
   ligneVentes            LigneVente[]
   lignesRetour           LigneRetour[]
@@ -190,19 +192,19 @@ model Vente {
 }
 
 model LigneVente {
-  id                       String    @id @default(uuid())
+  id                       String        @id @default(uuid())
   quantite                 Int
-  prixUnitaire             Decimal   @db.Decimal(10, 2)
-  stockInsuffisantConfirme Boolean   @default(false)
+  prixUnitaire             Decimal       @db.Decimal(10, 2)
+  stockInsuffisantConfirme Boolean       @default(false)
   venteId                  String
   produitId                String
   varianteId               String?
   lotId                    String?
-  lignesRetour LigneRetour[]
-  vente                    Vente     @relation(fields: [venteId], references: [id], onDelete: Cascade)
-  produit                  Produit   @relation(fields: [produitId], references: [id], onDelete: Restrict)
-  variante                 Variante? @relation(fields: [varianteId], references: [id], onDelete: Restrict)
-  lot                      Lot?      @relation(fields: [lotId], references: [id], onDelete: Restrict)
+  lignesRetour             LigneRetour[]
+  vente                    Vente         @relation(fields: [venteId], references: [id], onDelete: Cascade)
+  produit                  Produit       @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante                 Variante?     @relation(fields: [varianteId], references: [id], onDelete: Restrict)
+  lot                      Lot?          @relation(fields: [lotId], references: [id], onDelete: Restrict)
 }
 
 model CommandeFournisseur {
@@ -225,9 +227,11 @@ model LigneCommandeFournisseur {
   prixAchatUnitaire     Decimal             @db.Decimal(10, 2)
   commandeFournisseurId String
   produitId             String
+  varianteId            String?
   lignesReception       LigneReception[]
   commandeFournisseur   CommandeFournisseur @relation(fields: [commandeFournisseurId], references: [id], onDelete: Cascade)
   produit               Produit             @relation(fields: [produitId], references: [id], onDelete: Restrict)
+  variante              Variante?           @relation(fields: [varianteId], references: [id], onDelete: Restrict)
 }
 
 model ReceptionFournisseur {
@@ -238,7 +242,7 @@ model ReceptionFournisseur {
   commandeFournisseur   CommandeFournisseur @relation(fields: [commandeFournisseurId], references: [id], onDelete: Restrict)
   utilisateur           Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Restrict)
   lignesReception       LigneReception[]
-  lots                  Lot[]               // ← ajouté
+  lots                  Lot[] // ← ajouté
 }
 
 model LigneReception {
@@ -280,16 +284,16 @@ model LigneRetour {
 }
 
 model Inventaire {
-  id                      String            @id @default(uuid())
-  dateLancement           DateTime          @default(now())
-  statut                  StatutInventaire  @default(EN_COURS)
+  id                      String           @id @default(uuid())
+  dateLancement           DateTime         @default(now())
+  statut                  StatutInventaire @default(EN_COURS)
   utilisateurId           String
-  utilisateur             Utilisateur       @relation("InventaireLanceur", fields: [utilisateurId], references: [id], onDelete: Restrict)
+  utilisateur             Utilisateur      @relation("InventaireLanceur", fields: [utilisateurId], references: [id], onDelete: Restrict)
   utilisateurValidateurId String?
-  utilisateurValidateur   Utilisateur?      @relation("InventaireValidateur", fields: [utilisateurValidateurId], references: [id], onDelete: Restrict)
+  utilisateurValidateur   Utilisateur?     @relation("InventaireValidateur", fields: [utilisateurValidateurId], references: [id], onDelete: Restrict)
   dateValidation          DateTime?
 
-  lignesInventaire        LigneInventaire[]
+  lignesInventaire LigneInventaire[]
 }
 
 model LigneInventaire {
