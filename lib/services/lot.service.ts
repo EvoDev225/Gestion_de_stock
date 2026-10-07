@@ -1,9 +1,11 @@
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
 
-export async function genererNumeroLot(): Promise<string> {
-  const total = await prisma.lot.count();
-  return `LOT-${String(total + 1).padStart(5, "0")}`;
+export function genererNumeroLot(): string {
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+    return `LOT-${date}-${randomUUID().slice(0, 6).toUpperCase()}`;
 }
+
 export async function listerLots(
     produitId?: string,
     varianteId?: string,
@@ -59,7 +61,7 @@ export async function creerLot(data: {
   if (cibleProduit === cibleVariante) {
     throw new Error("Un lot doit être rattaché à exactement un produit OU une variante, jamais les deux ni aucun");
   }
-  const numeroLot = await genererNumeroLot();
+  const numeroLot = genererNumeroLot();
   return prisma.lot.create({
     data: { ...data, numeroLot },
     include: { produit: true, variante: { include: { produit: true } } },
