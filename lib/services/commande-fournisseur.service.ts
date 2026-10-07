@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client"; // Import nécessaire pour le type TransactionClient
+import { Prisma } from "../../generated/prisma/client"; // Import nécessaire pour le type TransactionClient
 import { enregistrerActivite } from "./journal-activite.service";
 
 export async function listerCommandesFournisseur() {
