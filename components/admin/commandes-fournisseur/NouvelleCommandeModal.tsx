@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Trash2, Plus, X } from "lucide-react";
 import type {
     Fournisseur,
@@ -39,17 +39,20 @@ export default function NouvelleCommandeModal({
     const [fournisseurId, setFournisseurId] = useState("");
     const [lignes, setLignes] = useState<NouvelleLigneCommandeData[]>([{ ...emptyLigne }]);
     const [errors, setErrors] = useState<{ fournisseur?: string; lignes?: string }>({});
-    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
-    if (isOpen && !prevIsOpen) {
-    setPrevIsOpen(true);
-    setFournisseurId("");
-    setLignes([{ ...emptyLigne }]);
-    setErrors({});
-}
 
-if (!isOpen && prevIsOpen) {
-    setPrevIsOpen(false);
-}
+    // ✅ Synchronisation pendant le rendu (pas de useEffect, pas de useCallback)
+    const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+    if (isOpen && !prevIsOpen) {
+        setPrevIsOpen(true);
+        setFournisseurId("");
+        setLignes([{ ...emptyLigne }]);
+        setErrors({});
+    }
+
+    if (!isOpen && prevIsOpen) {
+        setPrevIsOpen(false);
+    }
 
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
@@ -103,14 +106,14 @@ if (!isOpen && prevIsOpen) {
             const ligne = lignes[i];
             const produit = produits.find((p) => p.id === ligne.produitId);
 
-            // Vérifier que le produit est sélectionné
+            // Ligne sans produit : on l'ignore
             if (!ligne.produitId) {
-                continue; // Ligne vide, on l'ignore
+                continue;
             }
 
-            // Vérifier quantité et prix
+            // Ligne avec quantité ou prix invalide : on l'ignore
             if (Number(ligne.quantiteCommande) <= 0 || Number(ligne.prixAchatUnitaire) <= 0) {
-                continue; // Ligne invalide, on l'ignore
+                continue;
             }
 
             // Vérifier la variante si le produit en a
@@ -210,7 +213,7 @@ if (!isOpen && prevIsOpen) {
                         <div className="space-y-4">
                             {lignes.map((ligne, index) => {
                                 const produit = produits.find((p) => p.id === ligne.produitId);
-                                const aVariantes = produit && produit.variantes && produit.variantes.length > 0;
+                                const aVariantes = Boolean(produit && produit.variantes && produit.variantes.length > 0);
 
                                 return (
                                     <div
